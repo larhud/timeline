@@ -1,0 +1,20 @@
+{% extends "admin/base_site.html" %}
+{% load static  %}
+
+{% block title %}Import VC{% endblock %}
+
+{% block content %}
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% for f in form %}
+            <strong>{{ f.errors }}</strong>
+            <p>{{ f }}</p>
+        {% endfor %}
+       <div class="d-flex">
+           <button style="padding: 10px 15px" type="submit" class="button">Enviar</button>
+           {% if error %}<a style="margin-left: 10px" href="{{ error }}">Logs de erro</a>{% endif %}
+       </div>
+    </form>
+
+
+{% endblock %}

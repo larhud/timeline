@@ -1,0 +1,75 @@
+.tingle-modal{
+    z-index: 10000;
+}
+.form {
+    display: flex;
+    flex-direction: column;
+
+}
+.form-row-dialog {
+    display: flex;
+    padding: 0;
+    border: unset;
+    font-size: 13px;
+}
+.btn-sm {
+    padding: 10px;
+}
+.tingle-btn {
+    border-radius: 4px;
+    margin: 0 0 0 .5rem;
+}
+.form-row-dialog input[type=text] {
+    width: 100%;
+}
+.form-row-dialog ul {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+}
+.form-row-dialog ul li {
+    border-radius: 4px;
+    list-style: none;
+    padding: 7px;
+    margin: 5px;
+    transition: all .3s;
+    border: 1px solid #ccc;
+}
+
+.form-row-dialog ul li:hover {
+    background: #8081a5;
+    color: #fff;
+    cursor: pointer;
+}
+.form-row-dialog ul li:active {
+    background: #20236a;
+    color: #fff;
+    cursor: pointer;
+}
+.form-row-dialog ul li.active:hover {
+    background: #20236a;
+}
+.tingle-btn {
+    transition: background-color .2s;
+}
+.tingle-btn:hover {
+    background: #4c4f9c;
+}
+.active {
+    background: #4c4f9c;
+    color: #fff;
+}
+.label {
+    margin-bottom: 5px;
+}
+.form-group {
+    margin-top: 10px;
+    overflow-y: auto;
+    max-height: 300px;
+    transition: all .3s;
+}
+.loading {
+    font-size: 56px;
+    margin: 0 auto;
+}

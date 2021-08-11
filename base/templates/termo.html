@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load menu_tags cms_tags static vepeinfo_tags %}
+{% block title %}{{ title }} | {% endblock %}
+{% block content %}
+    {% include 'menu.html' %}
+    <main class="conteudo flex-shrink-0">
+        <div class="container">
+            {% if not error %}
+                <div class="row">
+                <div class="col">
+                    <div class="titulo">
+                        <h2>{{ title}}</h2>
+                        <div class="relacionados">
+                          {% for termo in termos_associados %}
+                              {% if termo.id == termo_id %}
+                                <a href="#">{{ termo.title }}</a>
+                              {% else %}
+                                  <a href="/termo/?id={{ termo.id }}">{{ termo.title }}</a>
+                              {% endif %}
+                          {% endfor %}
+                        </div>
+                    </div>
+                    <div class="descricao text-center">
+                        <p>{{ resumo }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row videos">
+            {% for video in videos %}
+                <div class="col-md-12">
+                    <div class="card mb-3">
+                        <div class="row g-0 no-gutters">
+                            <div class="col-md-3 item">
+                                <img src="{{ video.linha__video__url|get_miniature_video }}" alt="" class="video">
+                            </div>
+                            <div class="col-md-9">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ video.linha__texto }}({{ video.linha__minuto|time:"H:i:s" }})</h5>
+                                    <a href="{{ video.linha__video__url }}&t={{ video.linha__secundagem }}s" class="video-btn btn assistir" target="_blank">Assitir vídeo <i class="far fa-play-circle"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+            {% else %}
+                <div class="text-center">
+                    <h2>{{ error }}</h2>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+{% endblock %}

@@ -1,0 +1,7 @@
+.inline-group .tabular tr.has_original td {
+    padding: 1px 3px;
+    text-align: justify;
+}
+.inline-group thead th {
+    padding: 8px 3px;
+}

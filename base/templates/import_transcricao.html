@@ -1,0 +1,51 @@
+{% extends "admin/base_site.html" %}
+{% load static  %}
+
+{% block title %}Importação das Transcrições{% endblock %}
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        .form {
+            display: flex;
+            flex-direction: column;
+            width: 650px;
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgb(0 0 0 / 25%);
+        }
+        .container-form {
+            padding-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        select {
+            width: 100%;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="container-form">
+        <div class="form">
+            <h1>Importação das Transcrições</h1>
+            <form action="" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for f in form %}
+                <strong>{{ f.errors }}</strong>
+                <p>
+                    <div><label for="{{ f.id }}">{{ f.label }}:</label></div>
+                    {{ f }}
+                </p>
+
+            {% endfor %}
+           <div class="d-flex">
+               <button style="padding: 10px 15px" type="submit" class="button">Enviar</button>
+               {% if error %}<a style="margin-left: 10px" href="{{ error }}">Logs de erro</a>{% endif %}
+           </div>
+        </form>
+        </div>
+    </div>
+
+
+{% endblock %}
