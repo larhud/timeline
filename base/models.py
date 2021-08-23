@@ -62,3 +62,7 @@ class Assunto(models.Model):
 
     def __str__(self):
         return '%s' % self.noticia
+
+class Csv(models.Model):
+    file_name = models.FileField(upload_to='csvs')
+    texto = models.TextField()

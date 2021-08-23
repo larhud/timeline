@@ -2,7 +2,7 @@ import os
 
 from django import forms
 from django.contrib.admin.views.main import ChangeList
-
+from .models import Csv
 from django.forms import BaseInlineFormSet
 
 
@@ -31,6 +31,9 @@ class InlineChangeList(object):
         self.params = dict(request.GET.items())
 
 
-class FormImportacaoVC(forms.Form):
-    arquivo = forms.FileField()
-
+class FormImportacaoVC(forms.ModelForm):
+    class Meta:
+         model = Csv
+         fields = ['file_name']
+    # arquivo = forms.FileField()
+    # texto = forms.CharField(label='Timeline', widget=forms.Textarea())

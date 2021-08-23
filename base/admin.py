@@ -7,7 +7,7 @@ from django.utils.safestring import mark_safe
 from poweradmin.admin import PowerModelAdmin, InlineModelAdmin, PowerButton
 from .forms import LinhaFormSet, InlineChangeList
 
-from .models import Noticia, Termo, Assunto
+from .models import Noticia, Termo, Assunto, Csv
 from poweradmin.admin import PowerModelAdmin, InlineModelAdmin, PowerButton
 from .forms import LinhaFormSet, InlineChangeList
 
@@ -24,10 +24,14 @@ class TermoAdmin(PowerModelAdmin):
     search_fields = ('termo',)
     list_display = ('termo', 'num_reads', 'id_externo')
 
+class CsvAdmin(PowerModelAdmin):
+    pass
 
 admin.site.register(Termo, TermoAdmin)
 admin.site.register(Noticia, NoticiaAdmin)
 admin.site.register(Assunto, AssuntoAdmin)
+
+admin.site.register(Csv, CsvAdmin)
 
 
 
