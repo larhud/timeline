@@ -1,4 +1,5 @@
 import csv
+from django.http import JsonResponse
 import datetime
 import time
 import json
@@ -28,7 +29,7 @@ from base.models import Termo
 
 
 def importacaoVC(request):
-    arq = Noticia.objects.all()
+    #arq = Noticia.objects.all()
     form = FormImportacaoVC(request.POST or None, request.FILES or None)
 
     if str(request.method) == 'POST':
@@ -72,3 +73,15 @@ def importacaoVC(request):
         'form': form
     }
     return render(request, 'import_vc.html', context)
+
+def noticiaId(request, noticia_id):
+    noticia = Noticia.objects.get(pk=noticia_id)
+
+    return JsonResponse({
+        'url': noticia.url,
+        'titulo': noticia.titulo,
+        'dt': noticia.dt,
+        'texto': noticia.texto,
+        'media': noticia.media,
+        'atualizado': noticia.atualizado
+    })

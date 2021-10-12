@@ -4,5 +4,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('arquivo/', views.importacaoVC)
+    path('arquivo/', views.importacaoVC),
+    path('noticias/<int:noticia_id>', views.noticiaId)
 ]
