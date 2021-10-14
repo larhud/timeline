@@ -17,11 +17,16 @@ class Termo(models.Model):
 
 
 class Noticia(models.Model):
-    url = models.URLField()
-    titulo = models.TextField('Título', null=True, blank=True)
-    dt = models.DateField()
-    texto = models.TextField(null=True, blank=True)
+    year = models.IntegerField(null=True)
+    month = models.IntegerField(null=True)
+    day = models.IntegerField(null=True)
+    headline = models.TextField('Título', null=True, blank=True)
+    text = models.TextField(null=True, blank=True)
     media = models.URLField('Media', null=True, blank=True)
+    media_credit = models.TextField(null=True)
+    media_caption = models.URLField(null=True)
+    background = models.TextField(null=True)
+
     group = models.CharField('Grupo', max_length=80, null=True, blank=True)
     nuvem = models.TextField(null=True, blank=True)
     atualizado = models.BooleanField(default=False, null=True, blank=True)
@@ -34,7 +39,7 @@ class Noticia(models.Model):
 
         stopwords = Recurso.objects.get_or_create(recurso='TAGS-EXC')[0].valor or ''
         stopwords = stopwords.lower()
-        stopwords = [ exc.strip() for exc in stopwords.split(',') ] if stopwords else []
+        stopwords = [exc.strip() for exc in stopwords.split(',')] if stopwords else []
 
         words_compost_frequency = build_wordcloud(texto, stopwords)
 
@@ -46,7 +51,7 @@ class Noticia(models.Model):
         verbose_name = 'Notícia'
         
     def __str__(self):
-        return u'%s' % self.titulo
+        return u'%s' % self.headline
 
 
 class AssuntoManager(models.Manager):

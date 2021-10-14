@@ -41,30 +41,48 @@ def importacaoVC(request):
             with open(obj.file_name.path, 'r') as csv_file:
                 reader = csv.reader(csv_file, delimiter=',')
                 reader.__next__()
+                data = []
+                flag = 0
 
-                for i, linha in enumerate(reader):
-                    url = linha[0]
-                    titulo = linha[1]
-                    dt = linha[2]
-                    texto = linha[3]
-                    media = linha[4]
-                    grupo = linha[5]
-                    nuvem = linha[6]
-                    atualizado = linha[7]
+                for linha in reader:
+                    print(f'TESTE {linha[0]}, e {linha[9]}')
+                    if not (linha[9]):
+                        flag = 1
+                        continue
+                    else:
+                        year = linha[0]
+                        month = linha[1]
+                        day = linha[2]
+                        headline = linha[9]
+                        text = linha[10]
+                        media = linha[11]
+                        media_credit = linha[12]
+                        media_caption = linha[13]
+                        #background = linha[14]
 
-                    arqui = Noticia.objects.create(
-                        url = url,
-                        titulo = titulo,
-                        dt = dt,
-                        texto = texto,
-                        media = media,
-                        group = grupo,
-                        nuvem = nuvem,
-                        atualizado = atualizado,
+                        arqui = Noticia.objects.create(
 
-                    )
+                            year=year,
+                            month=month,
+                            day=day,
+                            headline=headline,
+                            text=text,
+                            media=media,
+                            media_credit=media_credit,
+                            media_caption=media_caption,
+                            #background=background
+                        )
 
-            arqui.save()
+                    arqui.save()
+
+                    if flag == 1:
+                        csv_file = open(obj.file_name.path, 'w')
+
+                        for i in data:
+                            str1 = ','.join(i)
+                            csv_file.write(str1+"\n")
+                            print(f'str1: {str1}')
+                        csv_file.close()
 
         else:
             messages.error(request, 'Erro ao enviar arquivo')
@@ -78,10 +96,13 @@ def noticiaId(request, noticia_id):
     noticia = Noticia.objects.get(pk=noticia_id)
 
     return JsonResponse({
-        'url': noticia.url,
-        'titulo': noticia.titulo,
-        'dt': noticia.dt,
-        'texto': noticia.texto,
+        'year': noticia.year,
+        'month': noticia.month,
+        'day': noticia.day,
+        'headline': noticia.headline,
+        'text': noticia.text,
         'media': noticia.media,
-        'atualizado': noticia.atualizado
+        'media_credit': noticia.media_credit,
+        'media_caption': noticia.media_caption,
+        'background': noticia.background
     })
