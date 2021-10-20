@@ -24,13 +24,13 @@ class TermoAdmin(PowerModelAdmin):
     search_fields = ('termo',)
     list_display = ('termo', 'num_reads', 'id_externo')
 
+
 class CsvAdmin(PowerModelAdmin):
     pass
 
 admin.site.register(Termo, TermoAdmin)
 admin.site.register(Noticia, NoticiaAdmin)
 admin.site.register(Assunto, AssuntoAdmin)
-
 admin.site.register(Csv, CsvAdmin)
 
 

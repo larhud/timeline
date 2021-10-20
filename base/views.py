@@ -48,8 +48,6 @@ def importacaoVC(request):
                     texto = linha[3]
                     media = linha[4]
                     grupo = linha[5]
-                    nuvem = linha[6]
-                    atualizado = linha[7]
 
                     arqui = Noticia.objects.create(
                         url = url,
@@ -58,9 +56,6 @@ def importacaoVC(request):
                         texto = texto,
                         media = media,
                         group = grupo,
-                        nuvem = nuvem,
-                        atualizado = atualizado,
-
                     )
 
             arqui.save()
