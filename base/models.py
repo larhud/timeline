@@ -17,11 +17,12 @@ class Termo(models.Model):
 
 
 class Noticia(models.Model):
-    url = models.URLField()
     titulo = models.TextField('Título', null=True, blank=True)
     dt = models.DateField()
+    url = models.URLField()
     texto = models.TextField(null=True, blank=True)
     media = models.URLField('Media', null=True, blank=True)
+    fonte = models.CharField('Fonte de Dados', max_length=80, null=True, blank=True)
     group = models.CharField('Grupo', max_length=80, null=True, blank=True)
     nuvem = models.TextField(null=True, blank=True)
     atualizado = models.BooleanField(default=False, null=True, blank=True)
@@ -62,7 +63,3 @@ class Assunto(models.Model):
 
     def __str__(self):
         return '%s' % self.noticia
-
-class Csv(models.Model):
-    file_name = models.FileField(upload_to='csvs')
-    texto = models.TextField()

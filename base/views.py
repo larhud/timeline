@@ -1,15 +1,9 @@
 import csv
 import datetime
-import time
-import json
-import os
-from collections import Counter
 
-import requests
-from bs4 import BeautifulSoup
-from django.conf import settings
+from io import TextIOWrapper
+
 from django.contrib import messages
-from django.db.models import F
 from django.http import Http404, JsonResponse
 from django.shortcuts import render, redirect
 from django.utils.decorators import method_decorator
@@ -22,48 +16,68 @@ from django.views.generic.base import ContextMixin, View
 from django_powercms.cms.email import sendmail
 from django_powercms.utils.models import LogObject
 
-from base.forms import FormImportacaoVC
-from base.models import Noticia, Csv
+from base.forms import FormImportacaoCSV
+from base.models import Noticia
 from base.models import Termo
 
 
 def importacaoVC(request):
-    arq = Noticia.objects.all()
-    form = FormImportacaoVC(request.POST or None, request.FILES or None)
+    form = FormImportacaoCSV(request.POST or None, request.FILES or None)
 
-    if str(request.method) == 'POST':
+    if request.method == 'POST':
         if form.is_valid():
-            form.save()
-            form = FormImportacaoVC()
-            obj = Csv.objects.get()
+            texto = form.cleaned_data['arquivo']
+            csv_file = TextIOWrapper(texto, encoding='utf-8')
+            reader = csv.reader(csv_file, delimiter=',')
+            reader.__next__()
+            tot_linhas = 0
+            for linha in reader:
+                url = linha[13]
+                if not url:
+                    continue
 
-            with open(obj.file_name.path, 'r') as csv_file:
-                reader = csv.reader(csv_file, delimiter=',')
-                reader.__next__()
+                titulo = linha[9]
+                try:
+                    ano = linha[0]
+                    mes = linha[1]
+                    dia = linha[2]
+                    dt = datetime.datetime.strptime(f"{ano}-{mes}-{dia}", "%Y-%m-%d")
+                except ValueError:
+                    messages.error(request, 'Erro ao converter arquivo na linha %d' % tot_linhas + 1)
+                    break
 
-                for i, linha in enumerate(reader):
-                    url = linha[0]
-                    titulo = linha[1]
-                    dt = linha[2]
-                    texto = linha[3]
-                    media = linha[4]
-                    grupo = linha[5]
+                arqui = Noticia.objects.create(
+                    url=url,
+                    titulo=titulo,
+                    dt=dt,
+                    texto=linha[10],
+                    media=linha[11],
+                    fonte=linha[12]
+                )
+                arqui.save()
+                tot_linhas += 1
 
-                    arqui = Noticia.objects.create(
-                        url = url,
-                        titulo = titulo,
-                        dt = dt,
-                        texto = texto,
-                        media = media,
-                        group = grupo,
-                    )
-
-            arqui.save()
-
+            messages.info(request, 'Importação efetuada com sucesso. %d notícias incluídas' % tot_linhas)
         else:
-            messages.error(request, 'Erro ao enviar arquivo')
+            messages.error(request, 'Erro ao importar o arquivo')
 
     context = {
         'form': form
     }
     return render(request, 'import_vc.html', context)
+
+
+def noticiaId(request, noticia_id):
+    noticia = Noticia.objects.get(pk=noticia_id)
+
+    return JsonResponse({
+        'year': noticia.year,
+        'month': noticia.month,
+        'day': noticia.day,
+        'headline': noticia.headline,
+        'text': noticia.text,
+        'media': noticia.media,
+        'media_credit': noticia.media_credit,
+        'media_caption': noticia.media_caption,
+        'background': noticia.background
+    })
