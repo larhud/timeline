@@ -5,5 +5,7 @@ from . import views
 
 urlpatterns = [
     path('arquivo/', views.importacaoVC),
-    path('noticias/<int:noticia_id>', views.noticiaId)
+    path('noticias/<int:noticia_id>', views.noticiaId),
+    path('timeline/', views.timeline),
+    path('govbr/', views.govbr)
 ]

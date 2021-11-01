@@ -1,10 +1,13 @@
 import csv
 import datetime
+import json
 
 from io import TextIOWrapper
+from urllib import request
 
+import serializers as serializers
 from django.contrib import messages
-from django.http import Http404, JsonResponse
+from django.http import Http404, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -66,18 +69,47 @@ def importacaoVC(request):
     }
     return render(request, 'import_vc.html', context)
 
-
 def noticiaId(request, noticia_id):
     noticia = Noticia.objects.get(pk=noticia_id)
 
     return JsonResponse({
-        'year': noticia.year,
-        'month': noticia.month,
-        'day': noticia.day,
-        'headline': noticia.headline,
-        'text': noticia.text,
-        'media': noticia.media,
-        'media_credit': noticia.media_credit,
-        'media_caption': noticia.media_caption,
-        'background': noticia.background
+        'dt': noticia.dt,
+        'titulo': noticia.titulo,
+        'texto': noticia.texto,
+        'url': noticia.url,
+        'media': noticia.url,
+        'fonte': noticia.fonte,
     })
+
+def timeline(request):
+
+    return render(request, 'timelinejs.html')
+
+
+def govbr(request):
+
+    resultado = []
+    queryset = Noticia.objects.filter(url__contains='gov.br')
+    data = {
+
+        'events': []
+    }
+    for registro in queryset:
+        data['events'].append(
+            {
+                "media": {
+                    "url": registro.url,
+                },
+                "start_date": {
+                    "month": registro.dt.month,
+                    "day": registro.dt.day,
+                    "year": registro.dt.year
+                },
+                "text": {
+                    "headline": registro.titulo,
+                    "text": registro.texto
+                }
+            }
+        )
+
+    return JsonResponse(data, safe=False)
