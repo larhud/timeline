@@ -77,7 +77,7 @@ def noticiaId(request, noticia_id):
         'titulo': noticia.titulo,
         'texto': noticia.texto,
         'url': noticia.url,
-        'media': noticia.url,
+        'media': noticia.media,
         'fonte': noticia.fonte,
     })
 

@@ -2,4 +2,5 @@ Django<3
 mysqlclient
 gunicorn
 lxml
+serializers
 django-powercms @ git+https://bitbucket.org/josir/powercms.git@libdev
