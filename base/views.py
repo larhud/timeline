@@ -77,7 +77,7 @@ def noticiaId(request, noticia_id):
         'titulo': noticia.titulo,
         'texto': noticia.texto,
         'url': noticia.url,
-        'media': noticia.url,
+        'media': noticia.media,
         'fonte': noticia.fonte,
     })
 
@@ -91,14 +91,13 @@ def govbr(request):
     resultado = []
     queryset = Noticia.objects.filter(url__contains='gov.br')
     data = {
-
         'events': []
     }
     for registro in queryset:
         data['events'].append(
             {
                 "media": {
-                    "url": registro.url,
+                    "url": registro.media,
                 },
                 "start_date": {
                     "month": registro.dt.month,
