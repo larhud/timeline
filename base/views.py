@@ -20,8 +20,7 @@ from django_powercms.cms.email import sendmail
 from django_powercms.utils.models import LogObject
 
 from base.forms import FormImportacaoCSV
-from base.models import Noticia
-from base.models import Termo
+from base.models import Noticia, Termo, Assunto
 
 
 def importacaoVC(request):
@@ -30,6 +29,8 @@ def importacaoVC(request):
     if request.method == 'POST':
         if form.is_valid():
             texto = form.cleaned_data['arquivo']
+            timeline = form.cleaned_data['timeline']
+            termo, _ = Termo.objects.get_or_create(termo=timeline)
             csv_file = TextIOWrapper(texto, encoding='utf-8')
             reader = csv.reader(csv_file, delimiter=',')
             reader.__next__()
@@ -49,25 +50,28 @@ def importacaoVC(request):
                     messages.error(request, 'Erro ao converter arquivo na linha %d' % tot_linhas + 1)
                     break
 
-                arqui = Noticia.objects.create(
-                    url=url,
-                    titulo=titulo,
-                    dt=dt,
-                    texto=linha[10],
-                    media=linha[11],
-                    fonte=linha[12]
-                )
-                arqui.save()
-                tot_linhas += 1
+                try:
+                    noticia = Noticia.objects.get(url=url)
+                except Noticia.DoesNotExist:
+                    noticia = Noticia.objects.create(
+                        url=url,
+                        titulo=titulo,
+                        dt=dt,
+                        texto=linha[10],
+                        media=linha[11],
+                        fonte=linha[12],
+                    )
+                    noticia.save()
+                    tot_linhas += 1
+                Assunto.objects.get_or_create(termo=termo, noticia=noticia)
 
             messages.info(request, 'Importação efetuada com sucesso. %d notícias incluídas' % tot_linhas)
-        else:
-            messages.error(request, 'Erro ao importar o arquivo')
 
     context = {
         'form': form
     }
     return render(request, 'import_vc.html', context)
+
 
 def noticiaId(request, noticia_id):
     noticia = Noticia.objects.get(pk=noticia_id)
@@ -81,8 +85,8 @@ def noticiaId(request, noticia_id):
         'fonte': noticia.fonte,
     })
 
-def timeline(request):
 
+def timeline(request):
     return render(request, 'timelinejs.html')
 
 
