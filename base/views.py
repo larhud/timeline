@@ -101,6 +101,7 @@ def govbr(request):
             {
                 "media": {
                     "url": registro.media,
+                    "media": registro.url + """ <span class="tl-note"><a href="URL">Leia a notícia</a></span>"""
                 },
                 "start_date": {
                     "month": registro.dt.month,
@@ -108,7 +109,7 @@ def govbr(request):
                     "year": registro.dt.year
                 },
                 "text": {
-                    "headline": registro.titulo,
+                    "headline": """<p>""" + registro.titulo + """</p>""",
                     "text": registro.texto
                 }
             }
