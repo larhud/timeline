@@ -19,7 +19,7 @@ from django.views.generic.base import ContextMixin, View
 from django_powercms.cms.email import sendmail
 from django_powercms.utils.models import LogObject
 
-from base.forms import FormImportacaoCSV
+from base.forms import FormImportacaoCSV, IntervaloNoticias
 from base.models import Noticia
 from base.models import Termo
 
@@ -85,7 +85,6 @@ def timeline(request):
 
     return render(request, 'timelinejs.html')
 
-
 def govbr(request):
 
     resultado = []
@@ -112,3 +111,34 @@ def govbr(request):
         )
 
     return JsonResponse(data, safe=False)
+
+def home(request):
+    form = IntervaloNoticias(request.POST or None, request.FILES or None)
+
+    data = {
+        'noticia': []
+    }
+    if request.method == 'POST':
+
+        if form.is_valid():
+            dtInicial = form.cleaned_data['dataInicial']
+            dtFinal = form.cleaned_data['dataFinal']
+
+            dI = datetime.date.strftime(dtInicial, "%Y-%m-%d")
+            dF = datetime.date.strftime(dtFinal, "%Y-%m-%d")
+            filtro = Noticia.objects.filter(dt__gte=dI, dt__lte=dF)
+
+            for registro in filtro:
+                data['noticia'].append({
+                    'dt': registro.dt,
+                    'titulo': registro.titulo
+                })
+
+            messages.info(request, 'Filtro atualizado')
+        else:
+            messages.error(request, 'Erro ao filtrar as notícias')
+    context = {
+        'form': form,
+        'data': data['noticia']
+    }
+    return render(request, 'pesquisa_data.html', context)
