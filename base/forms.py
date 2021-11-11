@@ -31,8 +31,8 @@ class InlineChangeList(object):
 
 
 class FormImportacaoCSV(forms.Form):
-    arquivo = forms.FileField(label='', widget=forms.ClearableFileInput(attrs={'accept': '.csv'}), required=False)
-
+    timeline = forms.CharField(label='Linha do Tempo', required=True)
+    arquivo = forms.FileField(label='', widget=forms.ClearableFileInput(attrs={'accept': '.csv'}), required=True)
 
 class IntervaloNoticias(forms.Form):
     dataInicial = forms.DateField()
