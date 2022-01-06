@@ -1,4 +1,4 @@
-{% extends "admin/base_site.html" %}
+{% extends "timeline.html" %}
 {% load static  %}
 
 {% block title %}TimelineJS{% endblock %}
@@ -11,8 +11,7 @@
         <script src="/static/js/timeline.js"></script>
 
         <div id='timeline-embed' style="width: 100%; height: 600px"></div>
-
-       <script type="text/javascript">
+        <script type="text/javascript">
 
             async function getJson(){
                 const response = await fetch('/govbr');
@@ -26,7 +25,6 @@
             }
 
             main()
-
         </script>
 
 {% endblock %}

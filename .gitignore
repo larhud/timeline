@@ -8,7 +8,6 @@ __pycache__
 *.fuse_hidden*
 *.vscode
 data
-vepeinfo/settings/local.py
 venv*
 import
 uploads
@@ -17,4 +16,4 @@ cache*.csv
 theme
 /static
 /media
-vepeinfo/local.py
+timeline/local.py
