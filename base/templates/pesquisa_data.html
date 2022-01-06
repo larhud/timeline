@@ -1,0 +1,25 @@
+{% extends "admin/base_site.html" %}
+{% load static  %}
+
+{% block title %}Filtro{% endblock %}
+
+{% block content %}
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+       <div class="d-flex">
+           <button style="padding: 10px 15px" type="submit" class="button">Buscar</button><br/>
+       </div>
+        <div>
+        <br/>
+            <table>
+                <a>Noticias</a>
+                    {% for key in data %}
+                    <tr>
+                        <td> Data: </td> <td> {{ key.dt }} </td> <td> Titulo: </td> <td> {{ key.titulo }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </form>
+{% endblock %}
