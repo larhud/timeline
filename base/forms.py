@@ -37,3 +37,6 @@ class FormImportacaoCSV(forms.Form):
 class IntervaloNoticias(forms.Form):
     dataInicial = forms.DateField()
     dataFinal = forms.DateField()
+
+class FormBusca(forms.Form):
+    busca = forms.CharField(label='Busca', required=True)

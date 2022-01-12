@@ -8,5 +8,8 @@ urlpatterns = [
     path('noticias/<int:noticia_id>', views.noticiaId),
     path('timeline/', views.timeline),
     path('govbr/', views.govbr),
-    path('home/', views.home, name='filtro')
+    path('home/', views.home, name='filtro'),
+
+    path('busca/', views.busca)
+
 ]

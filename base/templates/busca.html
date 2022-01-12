@@ -1,0 +1,16 @@
+{% extends "admin/base_site.html" %}
+{% load static  %}
+
+{% block title %}Busca{% endblock %}
+
+{% block content %}
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+       <div class="d-flex">
+           <button style="padding: 10px 15px" type="submit" class="button">Buscar</button><br/>
+       </div>
+
+
+    </form>
+{% endblock %}

@@ -5,6 +5,7 @@ import json
 from io import TextIOWrapper
 from urllib import request
 
+import requests as requests
 import serializers as serializers
 from django.contrib import messages
 from django.http import Http404, JsonResponse, HttpResponse
@@ -19,9 +20,50 @@ from django.views.generic.base import ContextMixin, View
 from django_powercms.cms.email import sendmail
 from django_powercms.utils.models import LogObject
 
-from base.forms import FormImportacaoCSV, IntervaloNoticias
+from base.forms import FormImportacaoCSV, IntervaloNoticias, FormBusca
 from base.models import Noticia, Termo, Assunto
 
+def busca(request):
+    busca = ''
+    form = FormBusca(request.POST or None, request.FILES or None)
+    if request.method == 'POST':
+
+        if form.is_valid():
+            busca = form.cleaned_data['busca']
+            try:
+                termo = Termo.objects.get_or_create(termo=busca)
+            except Termo.DoesNotExist:
+                termo = Termo.objects.create(termo=busca)
+                termo.save()
+            requisicao = requests.get(f"https://arquivo.pt/textsearch?q={busca}")
+            registro = requisicao.json()
+
+            new_registro = []
+
+            for k in registro['response_items']:
+                new_registro.append(k)
+
+                try:
+                    noticia = Noticia.objects.get(url=k['originalURL'])
+                except Noticia.DoesNotExist:
+                    noticia = Noticia.objects.create(
+                        url=k['originalURL'],
+                        titulo=k['title'],
+                        dt='2021-02-10',
+                        texto=k['linkToExtractedText'],
+                        media=k['linkToScreenshot'],
+                        fonte=k['linkToOriginalFile'],
+                    )
+                    noticia.save()
+
+                #Assunto.objects.get_or_create(termo=termo, noticia=noticia)
+        messages.info(request, 'Resgistros importados com sucesso')
+    context = {
+        'form': form,
+        'busca': busca
+    }
+
+    return render(request, 'busca.html', context=context)
 
 def importacaoVC(request):
     form = FormImportacaoCSV(request.POST or None, request.FILES or None)
@@ -147,3 +189,5 @@ def home(request):
         'data': data['noticia']
     }
     return render(request, 'pesquisa_data.html', context)
+
+
