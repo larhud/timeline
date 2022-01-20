@@ -1,7 +1,7 @@
 from django.db import models
 from cms.models import Recurso
 from django_powercms.utils.wordcloud import build_wordcloud
-
+from django.utils.text import slugify
 
 class Termo(models.Model):
     termo = models.CharField(max_length=120, unique=True)
@@ -62,3 +62,20 @@ class Assunto(models.Model):
 
     def __str__(self):
         return '%s' % self.noticia
+
+
+class Busca(models.Model):
+    dt = models.DateTimeField(auto_now_add=True)
+    hash = models.CharField(max_length=20, db_index=True)
+    count = models.IntegerField()
+    busca = models.TextField()
+
+    def __str__(self):
+        return '%s' % self.busca
+
+    def save(self, *args, **kwargs):
+        self.hash = slugify(self.busca)
+        self.count = 0
+        super(Busca, self).save(*args, **kwargs)
+
+

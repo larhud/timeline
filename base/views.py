@@ -21,9 +21,14 @@ from django_powercms.cms.email import sendmail
 from django_powercms.utils.models import LogObject
 
 from base.forms import FormImportacaoCSV, IntervaloNoticias, FormBusca
-from base.models import Noticia, Termo, Assunto
+from base.models import Noticia, Termo, Assunto, Busca
+from django.utils.text import slugify
 
-def busca(request):
+
+#
+# Rotina de Busca arquivo.pt
+#
+def api_arquivopt(request):
     busca = ''
     form = FormBusca(request.POST or None, request.FILES or None)
     if request.method == 'POST':
@@ -64,6 +69,7 @@ def busca(request):
     }
 
     return render(request, 'busca.html', context=context)
+
 
 def importacaoVC(request):
     form = FormImportacaoCSV(request.POST or None, request.FILES or None)
@@ -131,8 +137,8 @@ def noticiaId(request, noticia_id):
 def timeline(request):
     return render(request, 'timelinejs.html')
 
-def govbr(request):
 
+def govbr(request):
     resultado = []
     queryset = Noticia.objects.filter(url__contains='gov.br')
     data = {
@@ -159,7 +165,21 @@ def govbr(request):
 
     return JsonResponse(data, safe=False)
 
-def home(request):
+
+def pesquisa(request):
+    if request.method == 'GET':
+        busca = request.GET.get('busca')
+        key = slugify(busca)
+        if key:
+            try:
+                busca = Busca.objects.get(hash=key)
+            except Busca.DoesNotExist:
+                busca = Busca(busca=busca)
+                busca.save()
+        return redirect('/')
+
+
+def filtro(request):
     form = IntervaloNoticias(request.POST or None, request.FILES or None)
 
     data = {
@@ -189,5 +209,3 @@ def home(request):
         'data': data['noticia']
     }
     return render(request, 'pesquisa_data.html', context)
-
-

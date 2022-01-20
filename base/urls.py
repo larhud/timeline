@@ -8,8 +8,8 @@ urlpatterns = [
     path('noticias/<int:noticia_id>', views.noticiaId),
     path('timeline/', views.timeline),
     path('govbr/', views.govbr),
-    path('home/', views.home, name='filtro'),
-
-    path('busca/', views.busca)
+    path('pesquisa/', views.pesquisa, name='filtro'),
+    path('filtro_data/', views.filtro, name='filtro'),
+    path('arquivopt/', views.api_arquivopt)
 
 ]
