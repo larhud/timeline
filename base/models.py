@@ -1,7 +1,10 @@
-from django.db import models
 from cms.models import Recurso
-from django_powercms.utils.wordcloud import build_wordcloud
+from django.db import models
 from django.utils.text import slugify
+from django_powercms.utils.wordcloud import build_wordcloud
+
+from base.managers import NoticiaQueryset
+
 
 class Termo(models.Model):
     termo = models.CharField(max_length=120, unique=True)
@@ -26,15 +29,17 @@ class Noticia(models.Model):
     nuvem = models.TextField(null=True, blank=True)
     atualizado = models.BooleanField(default=False, null=True, blank=True)
 
+    objects = NoticiaQueryset.as_manager()
+
     def gerar_nuvem(self):
         texto = self.texto
         # termos da notícia
         for assunto in self.assunto_set.all():
-            texto += ' '+assunto.termo.termo
+            texto += ' ' + assunto.termo.termo
 
         stopwords = Recurso.objects.get_or_create(recurso='TAGS-EXC')[0].valor or ''
         stopwords = stopwords.lower()
-        stopwords = [ exc.strip() for exc in stopwords.split(',') ] if stopwords else []
+        stopwords = [exc.strip() for exc in stopwords.split(',')] if stopwords else []
 
         words_compost_frequency = build_wordcloud(texto, stopwords)
 
@@ -44,7 +49,7 @@ class Noticia(models.Model):
 
     class Meta:
         verbose_name = 'Notícia'
-        
+
     def __str__(self):
         return u'%s' % self.titulo
 
@@ -77,5 +82,3 @@ class Busca(models.Model):
         self.hash = slugify(self.busca)
         self.count = 0
         super(Busca, self).save(*args, **kwargs)
-
-

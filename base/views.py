@@ -1,28 +1,14 @@
 import csv
 import datetime
-import json
-
 from io import TextIOWrapper
-from urllib import request
 
 import requests as requests
-import serializers as serializers
 from django.contrib import messages
-from django.http import Http404, JsonResponse, HttpResponse
-from django.shortcuts import render, redirect
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import FormView, TemplateView, DetailView
-import urllib.parse as urlparse
-from urllib.parse import parse_qs
-from django.views.generic.base import ContextMixin, View
+from django.http import JsonResponse
+from django.shortcuts import render
 
-from django_powercms.cms.email import sendmail
-from django_powercms.utils.models import LogObject
-
-from base.forms import FormImportacaoCSV, IntervaloNoticias, FormBusca
-from base.models import Noticia, Termo, Assunto, Busca
-from django.utils.text import slugify
+from base.forms import FormImportacaoCSV, IntervaloNoticias, FormBusca, FormBuscaTimeLine
+from base.models import Noticia, Termo, Assunto
 
 
 #
@@ -61,7 +47,7 @@ def api_arquivopt(request):
                     )
                     noticia.save()
 
-                #Assunto.objects.get_or_create(termo=termo, noticia=noticia)
+                # Assunto.objects.get_or_create(termo=termo, noticia=noticia)
         messages.info(request, 'Resgistros importados com sucesso')
     context = {
         'form': form,
@@ -138,12 +124,14 @@ def timeline(request):
     return render(request, 'timelinejs.html')
 
 
-def govbr(request):
-    resultado = []
-    queryset = Noticia.objects.filter(url__contains='gov.br')
-    data = {
-        'events': []
-    }
+def pesquisa(request):
+    form = FormBuscaTimeLine(data=request.GET)
+    form.is_valid()
+
+    queryset = Noticia.objects.pesquisa(**form.cleaned_data)[:500]
+
+    data = {'events': [], 'nuvem': []}
+    # TODO: Popular nuvem de palavras
     for registro in queryset:
         data['events'].append(
             {
@@ -164,19 +152,6 @@ def govbr(request):
         )
 
     return JsonResponse(data, safe=False)
-
-
-def pesquisa(request):
-    if request.method == 'GET':
-        busca = request.GET.get('busca')
-        key = slugify(busca)
-        if key:
-            try:
-                busca = Busca.objects.get(hash=key)
-            except Busca.DoesNotExist:
-                busca = Busca(busca=busca)
-                busca.save()
-        return redirect('/')
 
 
 def filtro(request):

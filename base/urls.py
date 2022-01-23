@@ -7,8 +7,7 @@ urlpatterns = [
     path('arquivo/', views.importacaoVC),
     path('noticias/<int:noticia_id>', views.noticiaId),
     path('timeline/', views.timeline),
-    path('govbr/', views.govbr),
-    path('pesquisa/', views.pesquisa, name='filtro'),
+    path('pesquisa/', views.pesquisa, name='pesquisa'),
     path('filtro_data/', views.filtro, name='filtro'),
     path('arquivopt/', views.api_arquivopt)
 
