@@ -69,6 +69,7 @@ def importacaoVC(request):
             reader = csv.reader(csv_file, delimiter=',')
             reader.__next__()
             tot_linhas = 0
+            tot_erros = 0
             for linha in reader:
                 url = linha[13]
                 if not url:
@@ -90,16 +91,24 @@ def importacaoVC(request):
                     noticia = Noticia.objects.create(
                         url=url,
                         titulo=titulo,
-                        dt=dt,
-                        texto=linha[10],
-                        media=linha[11],
-                        fonte=linha[12],
-                    )
+                        dt=dt)
+                try:
+                    noticia.texto = linha[10]
+                    noticia.media = linha[11]
+                    noticia.fonte = linha[12]
                     noticia.save()
+                    Assunto.objects.get_or_create(termo=termo, noticia=noticia)
                     tot_linhas += 1
-                Assunto.objects.get_or_create(termo=termo, noticia=noticia)
+                except Exception as e:
+                    print(tot_linhas, linha[11])
+                    print(e.__str__())
+                    tot_erros += 1
 
-            messages.info(request, 'Importação efetuada com sucesso. %d notícias incluídas' % tot_linhas)
+            if tot_erros > 0:
+                messages.info(request, 'Importação efetuada com %d erros. %d notícias incluídas' %
+                              (tot_erros, tot_linhas))
+            else:
+                messages.info(request, 'Importação efetuada com sucesso. %d notícias incluídas' % tot_linhas)
 
     context = {
         'form': form
