@@ -60,6 +60,7 @@ def api_arquivopt(request):
 
 
 def importacaoVC(request):
+    log_output = None
     form = FormImportacaoCSV(request.POST or None, request.FILES or None)
 
     if request.method == 'POST':
@@ -117,7 +118,7 @@ def importacaoVC(request):
                 log_output = 'erro_importacao.log'
                 path_file = os.path.join(settings.MEDIA_ROOT, log_output)
                 file_log = open(path_file, mode='w', encoding='utf-8')
-                file_log.writelines(erros)
+                file_log.writelines("%s\n" % line for line in erros)
                 file_log.close()
                 messages.warning(request, 'Importação efetuada erros. %d notícias incluídas' % tot_linhas)
             else:
