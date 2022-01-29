@@ -22,7 +22,7 @@ class Termo(models.Model):
 class Noticia(models.Model):
     titulo = models.TextField('Título', null=True, blank=True)
     dt = models.DateField()
-    url = models.URLField(unique=True)
+    url = models.URLField(max_length=250, unique=True)
     texto = models.TextField(null=True, blank=True)
     media = models.URLField('Media', max_length=400, null=True, blank=True)
     fonte = models.CharField('Fonte de Dados', max_length=80, null=True, blank=True)

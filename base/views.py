@@ -1,3 +1,4 @@
+import os
 import csv
 import datetime
 from io import TextIOWrapper
@@ -6,6 +7,7 @@ import requests as requests
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.conf import settings
 
 from base.forms import FormImportacaoCSV, IntervaloNoticias, FormBusca, FormBuscaTimeLine
 from base.models import Noticia, Termo, Assunto
@@ -65,14 +67,19 @@ def importacaoVC(request):
             texto = form.cleaned_data['arquivo']
             timeline = form.cleaned_data['timeline']
             termo, _ = Termo.objects.get_or_create(termo=timeline)
+            erros = []
             csv_file = TextIOWrapper(texto, encoding='utf-8')
             reader = csv.reader(csv_file, delimiter=',')
             reader.__next__()
-            tot_linhas = 0
-            tot_erros = 0
+            tot_linhas = 1
             for linha in reader:
-                url = linha[13]
+                url = linha[13].split('#')[0]
+                if len(url) > 250:
+                    erros.append('Tamanho da URL inválido - linha(%d)' % tot_linhas)
+                    continue
+
                 if not url:
+                    erros.append('URL em branco - linha (%d)' % tot_linhas)
                     continue
 
                 titulo = linha[9]
@@ -82,8 +89,8 @@ def importacaoVC(request):
                     dia = linha[2]
                     dt = datetime.datetime.strptime(f"{ano}-{mes}-{dia}", "%Y-%m-%d")
                 except ValueError:
-                    messages.error(request, 'Erro ao converter arquivo na linha %d' % tot_linhas + 1)
-                    break
+                    erros.append('Erro ao converter data (linha %d)' % tot_linhas)
+                    continue
 
                 try:
                     noticia = Noticia.objects.get(url=url)
@@ -94,24 +101,31 @@ def importacaoVC(request):
                         dt=dt)
                 try:
                     noticia.texto = linha[10]
-                    noticia.media = linha[11]
+                    if linha[11][0:4] == 'http':
+                        noticia.media = linha[11]
+                    else:
+                        erros.append('URL da imagem inválida (linha %d)' % tot_linhas)
                     noticia.fonte = linha[12]
                     noticia.save()
                     Assunto.objects.get_or_create(termo=termo, noticia=noticia)
                     tot_linhas += 1
                 except Exception as e:
-                    print(tot_linhas, linha[11])
-                    print(e.__str__())
-                    tot_erros += 1
+                    erros.append('Erro desconhecido na URL: %s (linha %d)' % (linha[11], tot_linhas))
+                    erros.append(e.__str__())
 
-            if tot_erros > 0:
-                messages.info(request, 'Importação efetuada com %d erros. %d notícias incluídas' %
-                              (tot_erros, tot_linhas))
+            if len(erros) > 0:
+                log_output = 'erro_importacao.log'
+                path_file = os.path.join(settings.MEDIA_ROOT, log_output)
+                file_log = open(path_file, mode='w', encoding='utf-8')
+                file_log.writelines(erros)
+                file_log.close()
+                messages.warning(request, 'Importação efetuada erros. %d notícias incluídas' % tot_linhas)
             else:
                 messages.info(request, 'Importação efetuada com sucesso. %d notícias incluídas' % tot_linhas)
 
     context = {
-        'form': form
+        'form': form,
+        'error': os.path.join(settings.MEDIA_URL, log_output) if log_output else None
     }
     return render(request, 'import_vc.html', context)
 

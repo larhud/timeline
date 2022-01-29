@@ -21,3 +21,14 @@ RECAPTCHA_PUBLIC_KEY = ''
 RECAPTCHA_PRIVATE_KEY = '6LdpQvwbAAAAAGjmJ5BfZcgzLmPiV4nOeJpw9DQ1'
 
 SITE_NAME = 'Timeline LARHUD'
+
+DATABASES = {
+            'default': {
+                        'ENGINE': 'django.db.backends.mysql',
+                        'NAME': 'timeline',
+                        'USER': 'timeline',
+                        'PASSWORD': 'logica33',
+                        'OPTIONS': { 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'", },
+                        }
+            }
+
