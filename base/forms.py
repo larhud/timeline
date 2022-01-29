@@ -48,6 +48,8 @@ class FormBuscaTimeLine(forms.Form):
     """Form utilizado para tratar as condições de filtro da query de notícias"""
     busca = forms.CharField(label='Busca', required=False)
     datafiltro = forms.CharField(label='Data', required=False)
+    ano = forms.CharField(label='Ano', required=False)
+    mes = forms.CharField(label='Mês', required=False)
 
     def clean_datafiltro(self):
         """Este campo espera texto no padrão dd/mm/yyyy - dd/mm/yyyy e converte para uma lista de datas"""

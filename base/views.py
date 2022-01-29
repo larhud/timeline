@@ -136,10 +136,10 @@ def timeline(request):
 def pesquisa(request):
     form = FormBuscaTimeLine(data=request.GET)
     form.is_valid()
-
     queryset = Noticia.objects.pesquisa(**form.cleaned_data)[:500]
-
-    data = {'events': [], 'nuvem': []}
+    # Adicionada uma segunda consulta, para retornar os anos ao invés de computá-los com base nos registros limitados
+    anos = list(Noticia.objects.pesquisa(**form.cleaned_data).anos())
+    data = {'events': [], 'nuvem': [], 'anos': anos}
     # TODO: Popular nuvem de palavras
     for registro in queryset:
         data['events'].append(
