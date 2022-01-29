@@ -160,8 +160,8 @@ def pesquisa(request):
         data['events'].append(
             {
                 "media": {
-                    "url": registro.media,
-                    "media": registro.url + """ <span class="tl-note"><a href="URL">Leia a notícia</a></span>"""
+                    "url": registro.url,
+                    "media": registro.media
                 },
                 "start_date": {
                     "month": registro.dt.month,
