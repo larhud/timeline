@@ -24,10 +24,9 @@ class NoticiaQueryset(models.QuerySet):
         params = {}
         add_criteria(params, kwargs, 'busca', 'texto')
         add_criteria(params, kwargs, 'datafiltro', 'dt', tipo_lookup='__range')
-        add_criteria(params, kwargs, 'ano', tipo_lookup='')
-        add_criteria(params, kwargs, 'mes', tipo_lookup='')
+        add_criteria(params, kwargs, 'ano_mes', 'dt', tipo_lookup='__range')
 
-        return self.annotate(ano=ExtractYear('dt'), mes=ExtractMonth('dt')).filter(**params)
+        return self.filter(**params)
 
     def anos(self):
         """Retorna uma lista com distinct dos anos da base de notícias"""
