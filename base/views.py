@@ -24,7 +24,7 @@ def api_arquivopt(request):
         if form.is_valid():
             busca = form.cleaned_data['busca']
             try:
-                termo = Termo.objects.get_or_create(termo=busca)
+                termo = Termo.objects.get(termo=busca)
             except Termo.DoesNotExist:
                 termo = Termo.objects.create(termo=busca)
                 termo.save()
@@ -49,7 +49,7 @@ def api_arquivopt(request):
                     )
                     noticia.save()
 
-                # Assunto.objects.get_or_create(termo=termo, noticia=noticia)
+                Assunto.objects.get_or_create(termo=termo, noticia=noticia)
         messages.info(request, 'Resgistros importados com sucesso')
     context = {
         'form': form,
