@@ -9,6 +9,6 @@ urlpatterns = [
     path('timeline/', views.timeline),
     path('pesquisa/', views.pesquisa, name='pesquisa'),
     path('filtro_data/', views.filtro, name='filtro'),
-    path('arquivopt/', views.api_arquivopt)
+    path('arquivopt/', views.api_arquivopt),
 
 ]
