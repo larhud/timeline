@@ -13,18 +13,91 @@ from django.conf import settings
 from base.forms import FormImportacaoCSV, IntervaloNoticias, FormBusca, FormBuscaTimeLine
 from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
 
+from contamehistorias.datasources.webarchive import ArquivoPT
+from datetime import datetime
 
+# def testContame(request):
+#     requisicao = requests.get("http://127.0.0.1:8000/pesquisa")
+#     registro = requisicao.json()
+#     #print(registro)
+#
+#
+#     query = 'Rogerio ceni'
+#
+#     domains = []
+#     for k in registro:
+#         domains.append(k)
+#     print(domains)
+
+    # params = {'domains': domains,
+    #           'from': datetime(year=2016, month=3, day=1),
+    #           'to': datetime(year=2022, month=1, day=10)}
+    #
+    #
+    #
+    # apt = ArquivoPT()
+    # busca = []
+    # search_result = apt.getResult(query=query, **params)
+    # for k in search_result:
+    #     busca.append(k.headline)
+    #     print(f'teste{busca}')
+    # # for x in search_result:
+    # #     print(x.datetime)
+    # #     print(x.domain)
+    # #     print(x.headline)
+    # #     print(x.url)
+    # #     print()
+    # context ={
+    #     'search_result': search_result
+    # }
+    #
+    # return render(request, 'testContame.html', context=context)
 #
 # Rotina de Busca arquivo.pt
 #
 def api_arquivopt(request):
+    requisicao = requests.get("http://127.0.0.1:8000/pesquisa")
+    registro = requisicao.json()
+    # print(registro)
+
+    query = 'Bolsonaro'
+
+    domains = []
+    totNoticia = 0
+    for k in registro['events']:
+        domains.append(k['media']['url'])
+        totNoticia = totNoticia + 1
+    print(f'total = {totNoticia}')
+
+    params = {'domains': domains,
+              'from': datetime(year=2016, month=3, day=1),
+              'to': datetime(year=2022, month=1, day=10)}
+
+    #print(params)
+    apt = ArquivoPT()
+    # #busca1 = []
+    #print(apt)
+    #search_result = apt.getResult(query=query)
+    search_result = apt.getResult(query=query, **params)
+    #print(search_result)
+    for x in search_result:
+        print(x.datetime)
+        print(x.domain)
+        print(x.headline)
+        print(x.url)
+        print()
+    # #_______________________________________________
     busca = ''
     form = FormBusca(request.POST or None, request.FILES or None)
     if request.method == 'POST':
 
         if form.is_valid():
             busca = form.cleaned_data['busca']
-            termo, _ = Termo.objects.get_or_create(termo=busca)
+            try:
+                termo = Termo.objects.get(termo=busca)
+            except Termo.DoesNotExist:
+                termo = Termo.objects.create(termo=busca)
+                termo.save()
             requisicao = requests.get(f"https://arquivo.pt/textsearch?q={busca}")
             registro = requisicao.json()
 
@@ -48,7 +121,6 @@ def api_arquivopt(request):
                     noticia.save()
 
                 Assunto.objects.get_or_create(termo=termo, noticia=noticia)
-
         messages.info(request, 'Resgistros importados com sucesso')
     context = {
         'form': form,
