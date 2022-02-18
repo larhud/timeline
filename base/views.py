@@ -3,14 +3,15 @@ import csv
 import datetime
 from io import TextIOWrapper
 
-import requests as requests
+import requests
+import hashlib
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.conf import settings
 
 from base.forms import FormImportacaoCSV, IntervaloNoticias, FormBusca, FormBuscaTimeLine
-from base.models import Noticia, Termo, Assunto
+from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
 
 
 #
@@ -23,11 +24,7 @@ def api_arquivopt(request):
 
         if form.is_valid():
             busca = form.cleaned_data['busca']
-            try:
-                termo = Termo.objects.get_or_create(termo=busca)
-            except Termo.DoesNotExist:
-                termo = Termo.objects.create(termo=busca)
-                termo.save()
+            termo, _ = Termo.objects.get_or_create(termo=busca)
             requisicao = requests.get(f"https://arquivo.pt/textsearch?q={busca}")
             registro = requisicao.json()
 
@@ -35,21 +32,23 @@ def api_arquivopt(request):
 
             for k in registro['response_items']:
                 new_registro.append(k)
-
+                if len(k['originalURL']) > URL_MAX_LENGTH:
+                    print('URL fora do tamanho:')
                 try:
                     noticia = Noticia.objects.get(url=k['originalURL'])
                 except Noticia.DoesNotExist:
                     noticia = Noticia.objects.create(
                         url=k['originalURL'],
                         titulo=k['title'],
-                        dt='2021-02-10',
+                        dt=datetime.datetime.strptime(k['tstamp'][:8], '%Y%m%d'),
                         texto=k['linkToExtractedText'],
                         media=k['linkToScreenshot'],
                         fonte=k['linkToOriginalFile'],
                     )
                     noticia.save()
 
-                # Assunto.objects.get_or_create(termo=termo, noticia=noticia)
+                Assunto.objects.get_or_create(termo=termo, noticia=noticia)
+
         messages.info(request, 'Resgistros importados com sucesso')
     context = {
         'form': form,
@@ -70,12 +69,11 @@ def importacaoVC(request):
             termo, _ = Termo.objects.get_or_create(termo=timeline)
             erros = []
             csv_file = TextIOWrapper(texto, encoding='utf-8')
-            reader = csv.reader(csv_file, delimiter=',')
-            reader.__next__()
+            reader = csv.DictReader(csv_file, delimiter=',')
             tot_linhas = 1
             for linha in reader:
-                url = linha[13].split('#')[0]
-                if len(url) > 250:
+                url = linha['Media Caption'].split('#')[0]
+                if len(url) > URL_MAX_LENGTH:
                     erros.append('Tamanho da URL inválido - linha(%d)' % tot_linhas)
                     continue
 
@@ -83,36 +81,38 @@ def importacaoVC(request):
                     erros.append('URL em branco - linha (%d)' % tot_linhas)
                     continue
 
-                titulo = linha[9]
                 try:
-                    ano = linha[0]
-                    mes = linha[1]
-                    dia = linha[2]
+                    ano = linha['Year']
+                    mes = linha['Month']
+                    dia = linha['Day']
                     dt = datetime.datetime.strptime(f"{ano}-{mes}-{dia}", "%Y-%m-%d")
                 except ValueError:
                     erros.append('Erro ao converter data (linha %d)' % tot_linhas)
                     continue
 
+                url_hash = hashlib.sha256(url.encode('utf-8')).hexdigest()
+                titulo = linha['Headline']
                 try:
-                    noticia = Noticia.objects.get(url=url)
+                    noticia = Noticia.objects.get(url_hash=url_hash)
                 except Noticia.DoesNotExist:
-                    noticia = Noticia.objects.create(
+                    noticia = Noticia(
                         url=url,
                         titulo=titulo,
                         dt=dt)
                 try:
-                    noticia.texto = linha[10]
-                    if linha[11][0:4] == 'http':
-                        noticia.media = linha[11]
+                    noticia.texto = linha['Text']
+                    if linha['Media'][0:4] == 'http':
+                        noticia.media = linha['Media']
                     else:
                         erros.append('URL da imagem inválida (linha %d)' % tot_linhas)
-                    noticia.fonte = linha[12]
+                    noticia.fonte = linha['Media Credit']
                     noticia.save()
                     Assunto.objects.get_or_create(termo=termo, noticia=noticia)
                     tot_linhas += 1
                 except Exception as e:
-                    erros.append('Erro desconhecido na URL: %s (linha %d)' % (linha[11], tot_linhas))
+                    erros.append('Erro desconhecido na URL: %s (linha %d)' % (url, tot_linhas))
                     erros.append(e.__str__())
+                    continue
 
             if len(erros) > 0:
                 log_output = 'erro_importacao.log'
@@ -160,8 +160,8 @@ def pesquisa(request):
         data['events'].append(
             {
                 "media": {
-                    "url": registro.url,
-                    "media": registro.media
+                    "link": registro.url or 'http://erro',
+                    "url": registro.media or 'http://erro'
                 },
                 "start_date": {
                     "month": registro.dt.month,

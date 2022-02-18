@@ -12,27 +12,25 @@ from poweradmin.admin import PowerModelAdmin, InlineModelAdmin, PowerButton
 from .forms import LinhaFormSet, InlineChangeList
 
 
-class AssuntoAdmin(PowerModelAdmin):
-    pass
+class AssuntoInline(InlineModelAdmin):
+    model = Assunto
 
 
 class NoticiaAdmin(PowerModelAdmin):
     search_fields = ('titulo',)
     date_hierarchy = 'dt'
     list_display = ('dt', 'titulo', )
+    # inlines = (AssuntoInline,)
 
 
 class TermoAdmin(PowerModelAdmin):
     search_fields = ('termo',)
-    list_display = ('termo', 'num_reads', 'id_externo')
+    list_display = ('termo', 'tot_noticias',  'id_externo')
+    readonly_fields = ('tot_noticias',)
 
-
-class CsvAdmin(PowerModelAdmin):
-    pass
 
 admin.site.register(Termo, TermoAdmin)
 admin.site.register(Noticia, NoticiaAdmin)
-admin.site.register(Assunto, AssuntoAdmin)
 
 
 

@@ -1,3 +1,5 @@
+import hashlib
+
 from cms.models import Recurso
 from django.db import models
 from django.utils.text import slugify
@@ -18,40 +20,52 @@ class Termo(models.Model):
     def __str__(self):
         return self.termo
 
+    def tot_noticias(self):
+        return self.assunto_set.count() or 0
+    tot_noticias.short_description = "Total de Notícias"
+
+URL_MAX_LENGTH = 500
+
 
 class Noticia(models.Model):
-    titulo = models.TextField('Título', null=True, blank=True)
-    dt = models.DateField()
-    url = models.URLField(max_length=250, unique=True)
-    texto = models.TextField(null=True, blank=True)
+    dt = models.DateField(db_index=True)
+    url = models.URLField(max_length=URL_MAX_LENGTH)
+    url_hash = models.CharField(max_length=64, unique=True)
+    titulo = models.TextField('Título')
+    texto = models.TextField('Texto Base', null=True, blank=True)
     media = models.URLField('Media', max_length=400, null=True, blank=True)
     fonte = models.CharField('Fonte de Dados', max_length=80, null=True, blank=True)
     nuvem = models.TextField(null=True, blank=True)
+    texto_completo = models.TextField('Texto Completo', null=True, blank=True)
     atualizado = models.BooleanField(default=False, null=True, blank=True)
 
     objects = NoticiaQueryset.as_manager()
 
     def gerar_nuvem(self):
-        texto = self.texto
-        # termos da notícia
-        for assunto in self.assunto_set.all():
-            texto += ' ' + assunto.termo.termo
+        if self.texto:
+            texto = self.texto
+            # termos da notícia
+            for assunto in self.assunto_set.all():
+                texto += ' ' + assunto.termo.termo
 
-        stopwords = Recurso.objects.get_or_create(recurso='TAGS-EXC')[0].valor or ''
-        stopwords = stopwords.lower()
-        stopwords = [exc.strip() for exc in stopwords.split(',')] if stopwords else []
-
-        words_compost_frequency = build_wordcloud(texto, stopwords)
-
-        self.nuvem = words_compost_frequency
-        self.atualizado = True
-        self.save()
+            stopwords = Recurso.objects.get_or_create(recurso='TAGS-EXC')[0].valor or ''
+            stopwords = stopwords.lower()
+            stopwords = [exc.strip() for exc in stopwords.split(',')] if stopwords else []
+            return build_wordcloud(texto, stopwords)
+        else:
+            return None
 
     class Meta:
         verbose_name = 'Notícia'
+        ordering = ('dt',)
 
     def __str__(self):
         return u'%s' % self.titulo
+
+    def save(self, *args, **kwargs):
+        self.url_hash = hashlib.sha256(self.url.encode('utf-8')).hexdigest()
+        self.nuvem = self.gerar_nuvem()
+        super(Noticia, self).save(*args, **kwargs)
 
 
 class AssuntoManager(models.Manager):
