@@ -16,6 +16,7 @@ from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
 from contamehistorias.datasources.webarchive import ArquivoPT
 from datetime import datetime
 
+
 # def testContame(request):
 #     requisicao = requests.get("http://127.0.0.1:8000/pesquisa")
 #     registro = requisicao.json()
@@ -29,29 +30,29 @@ from datetime import datetime
 #         domains.append(k)
 #     print(domains)
 
-    # params = {'domains': domains,
-    #           'from': datetime(year=2016, month=3, day=1),
-    #           'to': datetime(year=2022, month=1, day=10)}
-    #
-    #
-    #
-    # apt = ArquivoPT()
-    # busca = []
-    # search_result = apt.getResult(query=query, **params)
-    # for k in search_result:
-    #     busca.append(k.headline)
-    #     print(f'teste{busca}')
-    # # for x in search_result:
-    # #     print(x.datetime)
-    # #     print(x.domain)
-    # #     print(x.headline)
-    # #     print(x.url)
-    # #     print()
-    # context ={
-    #     'search_result': search_result
-    # }
-    #
-    # return render(request, 'testContame.html', context=context)
+# params = {'domains': domains,
+#           'from': datetime(year=2016, month=3, day=1),
+#           'to': datetime(year=2022, month=1, day=10)}
+#
+#
+#
+# apt = ArquivoPT()
+# busca = []
+# search_result = apt.getResult(query=query, **params)
+# for k in search_result:
+#     busca.append(k.headline)
+#     print(f'teste{busca}')
+# # for x in search_result:
+# #     print(x.datetime)
+# #     print(x.domain)
+# #     print(x.headline)
+# #     print(x.url)
+# #     print()
+# context ={
+#     'search_result': search_result
+# }
+#
+# return render(request, 'testContame.html', context=context)
 #
 # Rotina de Busca arquivo.pt
 #
@@ -73,13 +74,13 @@ def api_arquivopt(request):
               'from': datetime(year=2016, month=3, day=1),
               'to': datetime(year=2022, month=1, day=10)}
 
-    #print(params)
+    # print(params)
     apt = ArquivoPT()
     # #busca1 = []
-    #print(apt)
-    #search_result = apt.getResult(query=query)
+    # print(apt)
+    # search_result = apt.getResult(query=query)
     search_result = apt.getResult(query=query, **params)
-    #print(search_result)
+    # print(search_result)
     for x in search_result:
         print(x.datetime)
         print(x.domain)
@@ -225,9 +226,9 @@ def pesquisa(request):
     form.is_valid()
     queryset = Noticia.objects.pesquisa(**form.cleaned_data)[:500]
     # Adicionada uma segunda consulta, para retornar os anos ao invés de computá-los com base nos registros limitados
-    anos = list(Noticia.objects.pesquisa(**form.cleaned_data).anos())
-    data = {'events': [], 'nuvem': [], 'anos': anos}
-    # TODO: Popular nuvem de palavras
+    anos = Noticia.objects.pesquisa(**form.cleaned_data).anos()
+    data = {'events': [], 'anos': anos}
+
     for registro in queryset:
         data['events'].append(
             {
@@ -280,3 +281,10 @@ def filtro(request):
         'data': data['noticia']
     }
     return render(request, 'pesquisa_data.html', context)
+
+
+def nuvem_de_palavras(request):
+    form = FormBuscaTimeLine(data=request.GET)
+    form.is_valid()
+    nuvem = [{'text': i[0], 'weight': i[1]} for i in Noticia.objects.pesquisa(**form.cleaned_data).nuvem()]
+    return JsonResponse(nuvem, safe=False)

@@ -3,9 +3,6 @@ from collections import Counter
 
 from django.core.validators import EMPTY_VALUES
 from django.db import models
-from django.db.models.functions import ExtractYear, ExtractMonth
-
-from django_powercms.utils.wordcloud import build_wordcloud
 
 
 def add_criteria(dct, opcoes, campo, lookup=None, tipo_lookup='__contains'):
@@ -35,15 +32,12 @@ class NoticiaQueryset(models.QuerySet):
 
     def anos(self):
         """Retorna uma lista com distinct dos anos da base de notícias"""
-        result = []
-        for r in self.dates('dt', 'year'):
-            result.append(r.year)
-        return result
+        return [r.year for r in self.dates('dt', 'year')]
 
     def nuvem(self):
         result = Counter()
         for record in self.all():
             nuvem = ast.literal_eval(record.nuvem)
             for termo in nuvem:
-                result[ termo[0] ] += termo[1]
+                result[termo[0]] += termo[1]
         return result.most_common(30)
