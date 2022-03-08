@@ -18,8 +18,9 @@ class AssuntoInline(InlineModelAdmin):
 
 class NoticiaAdmin(PowerModelAdmin):
     search_fields = ('titulo',)
+    list_filter = ('url_valida',)
     date_hierarchy = 'dt'
-    list_display = ('dt', 'titulo', )
+    list_display = ('dt', 'titulo', 'fonte', 'url_valida')
     # inlines = (AssuntoInline,)
 
 

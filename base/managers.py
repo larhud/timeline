@@ -1,8 +1,18 @@
 import ast
+import requests
 from collections import Counter
 
 from django.core.validators import EMPTY_VALUES
 from django.db import models
+from cms.models import Recurso
+
+
+def test_url(url):
+    try:
+        r = requests.get(url)
+        return True
+    except Exception as e:
+        return False
 
 
 def add_criteria(dct, opcoes, campo, lookup=None, tipo_lookup='__contains'):
@@ -35,9 +45,12 @@ class NoticiaQueryset(models.QuerySet):
         return [r.year for r in self.dates('dt', 'year')]
 
     def nuvem(self):
+        stopwords = Recurso.objects.get_or_create(recurso='TAGS-EXC')[ 0 ].valor or ''
+        stopwords = [ exc.strip() for exc in stopwords.split(',') ] if stopwords else [ ]
         result = Counter()
         for record in self.all():
             nuvem = ast.literal_eval(record.nuvem)
             for termo in nuvem:
-                result[termo[0]] += termo[1]
-        return result.most_common(30)
+                if termo[0] not in stopwords:
+                    result[termo[0]] += termo[1]
+        return result.most_common(40)

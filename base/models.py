@@ -5,11 +5,12 @@ from django.db import models
 from django.utils.text import slugify
 from django_powercms.utils.wordcloud import build_wordcloud
 
-from base.managers import NoticiaQueryset
+from base.managers import NoticiaQueryset, test_url
 
 
 class Termo(models.Model):
     termo = models.CharField(max_length=120, unique=True)
+    texto_explicativo = models.TextField(null=True)
     id_externo = models.BigIntegerField(null=True, blank=True)
     num_reads = models.BigIntegerField('Núm.Acessos', default=0)
 
@@ -31,19 +32,20 @@ class Noticia(models.Model):
     dt = models.DateField(db_index=True)
     url = models.URLField(max_length=URL_MAX_LENGTH)
     url_hash = models.CharField(max_length=64, unique=True)
+    url_valida = models.BooleanField(default=False)
     titulo = models.TextField('Título')
     texto = models.TextField('Texto Base', null=True, blank=True)
     media = models.URLField('Media', max_length=400, null=True, blank=True)
     fonte = models.CharField('Fonte de Dados', max_length=80, null=True, blank=True)
     nuvem = models.TextField(null=True, blank=True)
     texto_completo = models.TextField('Texto Completo', null=True, blank=True)
-    atualizado = models.BooleanField(default=False, null=True, blank=True)
+    atualizado = models.BooleanField(default=False)
 
     objects = NoticiaQueryset.as_manager()
 
     def gerar_nuvem(self):
-        if self.texto:
-            texto = self.texto
+        texto = self.texto_completo or self.texto
+        if texto:
             # termos da notícia
             for assunto in self.assunto_set.all():
                 texto += ' ' + assunto.termo.termo
@@ -51,7 +53,7 @@ class Noticia(models.Model):
             stopwords = Recurso.objects.get_or_create(recurso='TAGS-EXC')[0].valor or ''
             stopwords = stopwords.lower()
             stopwords = [exc.strip() for exc in stopwords.split(',')] if stopwords else []
-            return build_wordcloud(texto, stopwords)
+            return build_wordcloud(texto, [], stopwords)
         else:
             return None
 
@@ -64,6 +66,8 @@ class Noticia(models.Model):
 
     def save(self, *args, **kwargs):
         self.url_hash = hashlib.sha256(self.url.encode('utf-8')).hexdigest()
+        if not self.url_valida:
+            self.url_valida = test_url(self.url)
         self.nuvem = self.gerar_nuvem()
         super(Noticia, self).save(*args, **kwargs)
 

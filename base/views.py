@@ -1,7 +1,7 @@
 import os
 import csv
-import datetime
 from io import TextIOWrapper
+from datetime import datetime, date
 
 import requests
 import hashlib
@@ -14,7 +14,6 @@ from base.forms import FormImportacaoCSV, IntervaloNoticias, FormBusca, FormBusc
 from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
 
 from contamehistorias.datasources.webarchive import ArquivoPT
-from datetime import datetime
 
 
 # def testContame(request):
@@ -114,7 +113,7 @@ def api_arquivopt(request):
                     noticia = Noticia.objects.create(
                         url=k['originalURL'],
                         titulo=k['title'],
-                        dt=datetime.datetime.strptime(k['tstamp'][:8], '%Y%m%d'),
+                        dt=datetime.strptime(k['tstamp'][:8], '%Y%m%d'),
                         texto=k['linkToExtractedText'],
                         media=k['linkToScreenshot'],
                         fonte=k['linkToOriginalFile'],
@@ -158,7 +157,7 @@ def importacaoVC(request):
                     ano = linha['Year']
                     mes = linha['Month']
                     dia = linha['Day']
-                    dt = datetime.datetime.strptime(f"{ano}-{mes}-{dia}", "%Y-%m-%d")
+                    dt = datetime.strptime(f"{ano}-{mes}-{dia}", "%Y-%m-%d")
                 except ValueError:
                     erros.append('Erro ao converter data (linha %d)' % tot_linhas)
                     continue
@@ -206,7 +205,6 @@ def importacaoVC(request):
 
 def noticiaId(request, noticia_id):
     noticia = Noticia.objects.get(pk=noticia_id)
-
     return JsonResponse({
         'dt': noticia.dt,
         'titulo': noticia.titulo,
@@ -244,9 +242,14 @@ def pesquisa(request):
                 "text": {
                     "headline": """<p>""" + registro.titulo + """</p>""",
                     "text": registro.texto
-                }
+                },
             }
         )
+
+    # quando solucionar o problema da fonte, vamos incluir o background
+    #  "background": {
+    #                     "color": "#0075FF"
+    #                 }
 
     return JsonResponse(data, safe=False)
 
@@ -263,8 +266,8 @@ def filtro(request):
             dtInicial = form.cleaned_data['dataInicial']
             dtFinal = form.cleaned_data['dataFinal']
 
-            dI = datetime.date.strftime(dtInicial, "%Y-%m-%d")
-            dF = datetime.date.strftime(dtFinal, "%Y-%m-%d")
+            dI = date.strftime(dtInicial, "%Y-%m-%d")
+            dF = date.strftime(dtFinal, "%Y-%m-%d")
             filtro = Noticia.objects.filter(dt__gte=dI, dt__lte=dF)
 
             for registro in filtro:

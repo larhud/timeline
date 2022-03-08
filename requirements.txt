@@ -4,5 +4,7 @@ gunicorn
 lxml
 requests
 serializers
+selenium
+beautifulsoup4
 django-powercms @ git+https://bitbucket.org/josir/powercms.git@libdev
 git+https://github.com/LIAAD/TemporalSummarizationFramework.git
