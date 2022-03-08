@@ -5,7 +5,7 @@ from django.db import models
 from django.utils.text import slugify
 from django_powercms.utils.wordcloud import build_wordcloud
 
-from base.managers import NoticiaQueryset, test_url
+from base.managers import NoticiaQueryset, test_url, AssuntoManager
 
 
 class Termo(models.Model):
@@ -23,7 +23,9 @@ class Termo(models.Model):
 
     def tot_noticias(self):
         return self.assunto_set.count() or 0
+
     tot_noticias.short_description = "Total de Notícias"
+
 
 URL_MAX_LENGTH = 500
 
@@ -70,11 +72,6 @@ class Noticia(models.Model):
             self.url_valida = test_url(self.url)
         self.nuvem = self.gerar_nuvem()
         super(Noticia, self).save(*args, **kwargs)
-
-
-class AssuntoManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().select_related('termo')
 
 
 class Assunto(models.Model):

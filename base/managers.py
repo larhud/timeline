@@ -1,10 +1,11 @@
 import ast
-import requests
 from collections import Counter
 
+import requests
+from cms.models import Recurso
+from django.apps import apps as django_apps
 from django.core.validators import EMPTY_VALUES
 from django.db import models
-from cms.models import Recurso
 
 
 def test_url(url):
@@ -34,9 +35,17 @@ class NoticiaQueryset(models.QuerySet):
 
     def pesquisa(self, **kwargs):
         params = {}
+        termo_params = {}
+
         add_criteria(params, kwargs, 'busca', 'texto')
         add_criteria(params, kwargs, 'datafiltro', 'dt', tipo_lookup='__range')
         add_criteria(params, kwargs, 'ano_mes', 'dt', tipo_lookup='__range')
+
+        add_criteria(termo_params, kwargs, 'termo', 'termo__termo', tipo_lookup='')
+
+        if termo_params:
+            termo_cls = django_apps.get_model('base', 'Assunto')
+            params['pk__in'] = termo_cls.objects.filter(**termo_params).values_list('noticia__pk')
 
         return self.filter(**params)
 
@@ -45,8 +54,8 @@ class NoticiaQueryset(models.QuerySet):
         return [r.year for r in self.dates('dt', 'year')]
 
     def nuvem(self):
-        stopwords = Recurso.objects.get_or_create(recurso='TAGS-EXC')[ 0 ].valor or ''
-        stopwords = [ exc.strip() for exc in stopwords.split(',') ] if stopwords else [ ]
+        stopwords = Recurso.objects.get_or_create(recurso='TAGS-EXC')[0].valor or ''
+        stopwords = [exc.strip() for exc in stopwords.split(',')] if stopwords else []
         result = Counter()
         for record in self.all():
             nuvem = ast.literal_eval(record.nuvem)
@@ -54,3 +63,8 @@ class NoticiaQueryset(models.QuerySet):
                 if termo[0] not in stopwords:
                     result[termo[0]] += termo[1]
         return result.most_common(40)
+
+
+class AssuntoManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().select_related('termo')

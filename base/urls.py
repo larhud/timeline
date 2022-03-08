@@ -11,5 +11,5 @@ urlpatterns = [
     path('filtro_data/', views.filtro, name='filtro'),
     path('arquivopt/', views.api_arquivopt),
     path('nuvem-de-palavras/', views.nuvem_de_palavras, name='nuvem_de_palavras'),
-
+    path('timeline/<slug:slug>/', views.TimeLinePorTermo.as_view(), name='timeline_por_termo'),
 ]

@@ -1,0 +1,11 @@
+{% extends 'home.html' %}
+
+{% block content %}
+  <h1>Timeline {{ object|capfirst }}</h1>
+  <p>{{ object.texto_explicativo|safe }}</p>
+{% endblock %}
+
+{% block hidden_inputs %}
+  {{ block.super }}
+  <input type="hidden" name="termo" id="id_termo" value="{{ object.termo }}">
+{% endblock %}
