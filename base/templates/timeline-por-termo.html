@@ -1,5 +1,7 @@
 {% extends 'home.html' %}
 
+{% block title %}LARHUD ibict - Timeline {{ object|capfirst }}{% endblock %}
+
 {% block content %}
   <h1>Timeline {{ object|capfirst }}</h1>
   <p>{{ object.texto_explicativo|safe }}</p>
