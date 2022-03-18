@@ -1,8 +1,5 @@
-from urllib import request
-
 from django.urls import path
-from . import views
-from .templates import api
+from . import views, api
 
 urlpatterns = [
     path('arquivo/', views.importacaoVC),
