@@ -2,6 +2,7 @@ from urllib import request
 
 from django.urls import path
 from . import views
+from .templates import api
 
 urlpatterns = [
     path('arquivo/', views.importacaoVC),
@@ -11,5 +12,6 @@ urlpatterns = [
     path('filtro_data/', views.filtro, name='filtro'),
     path('arquivopt/', views.api_arquivopt),
     path('nuvem-de-palavras/', views.nuvem_de_palavras, name='nuvem_de_palavras'),
+    path('arquivotm/', api.arquivoTM)
 
 ]

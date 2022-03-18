@@ -5,10 +5,13 @@ from datetime import datetime, date
 
 import requests
 import hashlib
+import requests as requests
+from contamehistorias.datasources import models, utils
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.conf import settings
+from requests import request
 
 from base.forms import FormImportacaoCSV, IntervaloNoticias, FormBusca, FormBuscaTimeLine
 from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
@@ -87,6 +90,10 @@ def api_arquivopt(request):
         print(x.url)
         print()
     # #_______________________________________________
+from datetime import datetime
+
+def api_arquivopt(request):
+
     busca = ''
     form = FormBusca(request.POST or None, request.FILES or None)
     if request.method == 'POST':
