@@ -8,7 +8,7 @@ __pycache__
 *.fuse_hidden*
 *.vscode
 data
-venv*
+.venv/
 import
 uploads
 initial
