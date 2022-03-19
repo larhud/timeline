@@ -1,25 +1,24 @@
-import os
 import csv
-from io import TextIOWrapper
+import hashlib
+import os
 from datetime import datetime, date
+from io import TextIOWrapper
 
 import requests
-import hashlib
-import requests as requests
+from contamehistorias.datasources.webarchive import ArquivoPT
 from contamehistorias.datasources import models, utils
+
+from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import render
-from django.conf import settings
-from requests import request
+from django.views.generic import DetailView
 
 from base.forms import FormImportacaoCSV, IntervaloNoticias, FormBusca, FormBuscaTimeLine
 from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
 
-from contamehistorias.datasources.webarchive import ArquivoPT
 
 def api_arquivopt(request):
-
     busca = ''
     form = FormBusca(request.POST or None, request.FILES or None)
     if request.method == 'POST':
@@ -224,3 +223,10 @@ def nuvem_de_palavras(request):
     form.is_valid()
     nuvem = [{'text': i[0], 'weight': i[1]} for i in Noticia.objects.pesquisa(**form.cleaned_data).nuvem()]
     return JsonResponse(nuvem, safe=False)
+
+
+class TimeLinePorTermo(DetailView):
+    """View que vai buscar um termo e apresentar as notícias em uma timeline"""
+    template_name = 'timeline-por-termo.html'
+    model = Termo
+    slug_field = 'termo'
