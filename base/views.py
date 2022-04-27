@@ -130,20 +130,24 @@ def api_arquivopt(request):
     return render(request, 'busca.html', context=context)
 
 
-def importacaoVC(request):
+def importacaoCSV(request):
     log_output = None
     form = FormImportacaoCSV(request.POST or None, request.FILES or None)
 
     if request.method == 'POST':
         if form.is_valid():
             texto = form.cleaned_data['arquivo']
-            timeline = form.cleaned_data['timeline']
+            timeline = form.cleaned_data['timeline'].upper()
             termo, _ = Termo.objects.get_or_create(termo=timeline)
             erros = []
             csv_file = TextIOWrapper(texto, encoding='utf-8')
             reader = csv.DictReader(csv_file, delimiter=',')
-            tot_linhas = 1
+            tot_linhas = 0
+            tot_alteradas = 0
+            tot_incluidas = 0
             for linha in reader:
+                tot_linhas += 1
+                print(tot_linhas)
                 url = linha['Media Caption'].split('#')[0]
                 if len(url) > URL_MAX_LENGTH:
                     erros.append('Tamanho da URL inválido - linha(%d)' % tot_linhas)
@@ -154,33 +158,83 @@ def importacaoVC(request):
                     continue
 
                 try:
+                    id_externo = int(linha['ID'])
+                except:
+                    erros.append('ID em branco ou não numérico - linha (%d)' % tot_linhas)
+                    continue
+
+                try:
                     ano = linha['Year']
                     mes = linha['Month']
                     dia = linha['Day']
                     dt = datetime.strptime(f"{ano}-{mes}-{dia}", "%Y-%m-%d")
                 except ValueError:
-                    erros.append('Erro ao converter data (linha %d)' % tot_linhas)
+                    erros.append(f'Erro ao converter data (linha {tot_linhas})')
                     continue
 
                 url_hash = hashlib.sha256(url.encode('utf-8')).hexdigest()
+
                 titulo = linha['Headline']
+
                 try:
-                    noticia = Noticia.objects.get(url_hash=url_hash)
+                    noticia = Noticia.objects.get(id_externo=id_externo)
+                    assunto = noticia.assunto_set.filter(termo=termo, noticia=noticia)
+                    found = assunto.count() == 1
                 except Noticia.DoesNotExist:
-                    noticia = Noticia(
-                        url=url,
-                        titulo=titulo,
-                        dt=dt)
+                    found = False
+
+                if found:
+                    if url_hash != noticia.url_hash:
+                        noticia.url_hash = url_hash
+                        noticia.url = url
+                        noticia.dt = dt
+                        noticia.titulo = titulo
+                        noticia.url_valida = False
+                        noticia.revisado = False
+                        noticia.atualizado = False
+                        tot_alteradas += 1
+                        print(id_externo)
+
+                        # Verifica se não existe alguma outra URL igual
+                        # Se houver e for do mesmo conjunto, indicar o erro
+                        dup = Noticia.objects.filter(url_hash=url_hash).exclude(id_externo=id_externo)
+                        if dup:
+                            erros.append('URL Duplicada: %s (linha %d)' % (url, tot_linhas))
+                            temp_hash = hashlib.sha256(str(dup[0].id).encode('utf-8')).hexdigest()
+                            dup.update(url_hash=temp_hash, texto_busca='URL duplicada')
+
+                else:
+                    try:
+                        noticia = Noticia.objects.get(url_hash=url_hash)
+
+                    except Noticia.DoesNotExist:
+                        noticia = Noticia(
+                            url=url,
+                            titulo=titulo,
+                            id_externo=id_externo,
+                            dt=dt)
+                        tot_incluidas += 1
+
                 try:
                     noticia.texto = linha['Text']
                     if linha['Media'][0:4] == 'http':
+                        if noticia.media != linha['Media']:
+                            noticia.imagem = None
                         noticia.media = linha['Media']
                     else:
-                        erros.append('URL da imagem inválida (linha %d)' % tot_linhas)
+                        erros.append('URL da imagem inválida (id_externo %d)' % id_externo)
                     noticia.fonte = linha['Media Credit']
                     noticia.save()
-                    Assunto.objects.get_or_create(termo=termo, noticia=noticia)
-                    tot_linhas += 1
+
+                    # se já houver assunto cadastrado para esse termo, atualiza o id_externo
+                    # senão cria um novo
+                    try:
+                        assunto = Assunto.objects.get(noticia=noticia, termo=termo)
+                        assunto.id_externo = id_externo
+                        assunto.save()
+                    except Assunto.DoesNotExist:
+                        Assunto.objects.create(termo=termo, noticia=noticia, id_externo=id_externo)
+
                 except Exception as e:
                     erros.append('Erro desconhecido na URL: %s (linha %d)' % (url, tot_linhas))
                     erros.append(e.__str__())
@@ -192,9 +246,11 @@ def importacaoVC(request):
                 file_log = open(path_file, mode='w', encoding='utf-8')
                 file_log.writelines("%s\n" % line for line in erros)
                 file_log.close()
-                messages.warning(request, 'Importação efetuada erros. %d notícias incluídas' % tot_linhas)
+                messages.warning(request, 'Importação efetuada com erros.')
             else:
-                messages.info(request, 'Importação efetuada com sucesso. %d notícias incluídas' % tot_linhas)
+                messages.info(request, 'Importação efetuada com sucesso.')
+            messages.info(request, '%d notícias incluídas' % tot_incluidas)
+            messages.info(request, '%d notícias alteradas' % tot_alteradas)
 
     context = {
         'form': form,
@@ -215,6 +271,10 @@ def noticiaId(request, noticia_id):
     })
 
 
+def get_pdf(request, noticia_id):
+    return
+
+
 def timeline(request):
     return render(request, 'timelinejs.html')
 
@@ -232,7 +292,7 @@ def pesquisa(request):
             {
                 "media": {
                     "link": registro.url or 'http://erro',
-                    "url": registro.media or 'http://erro'
+                    "url": registro.imagem or registro.media or 'http://erro'
                 },
                 "start_date": {
                     "month": registro.dt.month,

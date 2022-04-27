@@ -17,11 +17,22 @@ class AssuntoInline(InlineModelAdmin):
 
 
 class NoticiaAdmin(PowerModelAdmin):
-    search_fields = ('titulo',)
-    list_filter = ('url_valida',)
+    search_fields = ('titulo', 'texto', 'url')
+    list_filter = ('url_valida', 'atualizado', 'revisado')
     date_hierarchy = 'dt'
-    list_display = ('dt', 'titulo', 'fonte', 'url_valida')
+    list_display = ('id_externo', 'dt', 'titulo', 'fonte', 'url_valida', 'revisado')
+    ordering = ('id_externo',)
+    fields = ('id_externo', 'dt', 'titulo', 'url', 'texto', ('fonte', 'url_valida', 'atualizado', 'revisado',),
+              'media', 'texto_completo', 'nuvem', 'texto_busca', 'imagem')
     # inlines = (AssuntoInline,)
+
+    def get_buttons(self, request, object_id):
+        buttons = super(NoticiaAdmin, self).get_buttons(request, object_id)
+        if object_id:
+            buttons.append(
+                PowerButton(url=reverse('get_pdf', kwargs={'id': object_id, }),
+                            label=u'Visualiza PDF'))
+        return buttons
 
 
 class TermoAdmin(PowerModelAdmin):

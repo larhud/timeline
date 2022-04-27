@@ -10,12 +10,21 @@ from base.models import Noticia
 class Command(BaseCommand):
     help = 'Verifica se as URLs são válidas'
 
+    def add_arguments(self, parser):
+        parser.add_argument('-i', '--id', type=str, help='Id da Notícia')
+
     def handle(self, *args, **options):
         base_dir = os.path.dirname(os.path.abspath(__file__)).split('/')[:-3]
         base_dir = '/'.join(base_dir)
+        id = options['id']
         html_path = os.path.join('/', base_dir, 'media', 'html')
         pdf_path = os.path.join('/', base_dir, 'media', 'pdf')
-        for noticia in Noticia.objects.filter(url_valida=False):
+        if id:
+            queryset = Noticia.objects.filter(id=id)
+        else:
+            queryset = Noticia.objects.filter(url_valida=False)
+
+        for noticia in queryset:
             try:
                 response = requests.head(noticia.url)
                 if response.status_code == 200:

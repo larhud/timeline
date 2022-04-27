@@ -36,7 +36,7 @@ def backup(connection):
     with connection.cd(path):
         senha = read_var(connection, path+'mysql.pwd').strip()
         filename = path + 'backup%s.gz' % datetime.strftime(datetime.now(),'%Y%m%d')
-        connection.run('mysqldump -u vepeinfo -p"%s" vepeinfo --no-tablespaces | gzip > %s' % (senha, filename))
+        connection.run('mysqldump -u timeline -p"%s" timeline --no-tablespaces | gzip > %s' % (senha, filename))
         print(filename)
         connection.get(filename)
         # connection.run('rm %s' % path+filename)

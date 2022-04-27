@@ -1,10 +1,39 @@
 import os
-import requests
+import re
 
 from bs4 import BeautifulSoup
 
 from django.core.management.base import BaseCommand
 from base.models import Noticia
+
+
+def extract_text(soup):
+    texto = ""
+    for line in soup.find_all("div", {"class": [ "content-text", "text", "text   ", "post-item-wrap"]}):
+        if line.text:
+            texto += line.text + '\n'
+
+    for line in soup.find_all("section", {"class": ["internalContent"]}):
+        if line.text:
+            texto += line.text
+
+    if not texto:
+        for article in soup.find_all("article"):
+            for lines in article.find_all("div"):
+                line = re.sub("\s+", " ", lines.text).strip()
+                if line:
+                    texto += line + '\n'
+
+    if not texto:
+        texto = soup.get_text()
+
+    lines = (line.strip() for line in texto.splitlines())
+    # break multi-headlines into a line each
+    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+    # drop blank lines
+    texto = '\n'.join(chunk for chunk in chunks if chunk)
+
+    return texto
 
 
 class Command(BaseCommand):
@@ -18,13 +47,22 @@ class Command(BaseCommand):
         base_dir = '/'.join(base_dir)
         id = options['id']
         html_path = os.path.join('/', base_dir, 'media', 'html')
-        for noticia in Noticia.objects.filter(id=id):
-            with open(f"{html_path}/{id}.html", 'r') as f:
-                html = f.read()
+        for noticia in Noticia.objects.filter(atualizado=False, revisado=False, id=id):
+            if os.path.exists("%s/%d.html" % (html_path, noticia.id)):
+                with open(f"{html_path}/{id}.html", 'r') as f:
+                    html = f.read()
+            else:
+                print('HTML não encontrado')
 
             soup = BeautifulSoup(html, features="html.parser")
-            texto = ""
-            for line in soup.find_all("div", {"class": "content-text"}):
-                texto += line + '\n'
-            noticia.texto_completo = texto
-            noticia.save()
+            cleaned = id is not None
+            for script in soup([ "script", "style", "noscript" ]):
+                script.extract()  # rip it out all scripts and styles
+                cleaned = True
+
+            if cleaned:
+                texto = extract_text(soup)
+                if texto:
+                    noticia.texto_completo = texto
+                    noticia.atualizado = True
+                    noticia.save()
