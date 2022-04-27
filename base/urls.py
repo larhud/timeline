@@ -1,7 +1,5 @@
-from urllib import request
-
 from django.urls import path
-from . import views
+from . import views, api
 
 urlpatterns = [
     path('importacao/', views.importacaoCSV),
@@ -12,5 +10,6 @@ urlpatterns = [
     path('pesquisa/', views.pesquisa, name='pesquisa'),
     path('filtro_data/', views.filtro, name='filtro'),
     path('nuvem-de-palavras/', views.nuvem_de_palavras, name='nuvem_de_palavras'),
-
+    path('timeline/<slug:slug>/', views.TimeLinePorTermo.as_view(), name='timeline_por_termo'),
+    path('arquivotm/', api.arquivoTM)
 ]

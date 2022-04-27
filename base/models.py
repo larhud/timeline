@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.text import slugify
 from cms.models import Recurso
 
-from base.managers import NoticiaQueryset, test_url, build_wordcloud
+from base.managers import NoticiaQueryset, test_url, build_wordcloud, AssuntoManager
 
 
 class Termo(models.Model):
@@ -22,7 +22,9 @@ class Termo(models.Model):
 
     def tot_noticias(self):
         return self.assunto_set.count() or 0
+
     tot_noticias.short_description = "Total de Notícias"
+
 
 URL_MAX_LENGTH = 500
 
@@ -89,11 +91,6 @@ class Noticia(models.Model):
                 busca += item+' '
             self.texto_busca = busca
         super(Noticia, self).save(*args, **kwargs)
-
-
-class AssuntoManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().select_related('termo')
 
 
 class Assunto(models.Model):
