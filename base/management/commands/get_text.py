@@ -7,6 +7,16 @@ from django.core.management.base import BaseCommand
 from base.models import Noticia
 
 
+# remove all script and style elements from HTML
+# input: html string
+# output: soup object
+def extract_scripts_and_styles(html):
+    soup = BeautifulSoup(html, features="html.parser")
+    for script in soup(["script", "style", "noscript"]):
+        script.extract()
+    return soup
+
+
 def extract_text(soup):
     texto = ""
     for line in soup.find_all("div", {"class": [ "content-text", "text", "text   ", "post-item-wrap"]}):

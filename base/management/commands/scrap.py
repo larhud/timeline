@@ -9,9 +9,9 @@ from base.models import Noticia
 from base64 import b64decode
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from selenium.webdriver.common.by import By
+# from selenium.webdriver.common.by import By
 
-from .get_text import extract_text
+from .get_text import extract_text, extract_scripts_and_styles
 
 
 def print_pdf(url, filename):
@@ -119,10 +119,7 @@ class Command(BaseCommand):
                         os.rename(pdf_filename, pdf_filename.replace('.pdf','_old.pdf'))
 
                 tot_scrap += 1
-                soup = BeautifulSoup(html, features="html.parser")
-                # remove all script and style elements
-                for script in soup(["script", "style", "noscript"]):
-                    script.extract()
+                soup = extract_scripts_and_styles(html)
                 with open(f"{html_path}/{noticia.id}.html",'w',encoding='utf-8') as f:
                     f.write(str(soup))
 

@@ -67,6 +67,15 @@ class Noticia(models.Model):
     def __str__(self):
         return u'%s' % self.titulo
 
+    @property
+    def imagem_final(self):
+        if self.imagem:
+            return '/'+self.imagem
+        elif self.media:
+            return self.media
+        else:
+            return '/media/img/66.jpg'
+
     def save(self, *args, **kwargs):
         if not self.url_hash:
             self.url_hash = hashlib.sha256(self.url.encode('utf-8')).hexdigest()

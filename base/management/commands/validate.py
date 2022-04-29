@@ -1,7 +1,7 @@
 import os
 import requests
 
-from bs4 import BeautifulSoup
+import hashlib
 
 from django.core.management.base import BaseCommand
 from base.models import Noticia
@@ -22,20 +22,28 @@ class Command(BaseCommand):
         if id:
             queryset = Noticia.objects.filter(id=id)
         else:
-            queryset = Noticia.objects.filter(url_valida=False)
+            queryset = Noticia.objects.all()
 
         for noticia in queryset:
             try:
-                response = requests.head(noticia.url)
-                if response.status_code == 200:
-                    noticia.url_valida = True
-                    noticia.save()
-                else:
+                real_hash = hashlib.sha256(noticia.url.encode('utf-8')).hexdigest()
+                if real_hash != noticia.url_hash:
+                    dset = Noticia.objects.filter(url_hash=real_hash).exclude(id=noticia.id)
+                    if dset.count() != 0:
+                        print(f'URL Duplicada {noticia.id_externo} {noticia.url}')
+
+                '''
+                response = requests.head(noticia.url, timeout=5)
+                if response.status_code != 200:
                     if response.history:
                         print("Request was redirected")
                         for resp in response.history:
                             print(resp.status_code, resp.url)
                         print("Final destination:")
                         print(response.status_code, response.url)
+                    else:
+                        if noticia.url_valida:
+                            print(f'URL não validada com ID: {noticia.id}')
+                '''
             except Exception as e:
                 print(e.__str__())

@@ -5,18 +5,44 @@ from datetime import datetime, date
 from io import TextIOWrapper
 
 import requests
+
 from contamehistorias.datasources.webarchive import ArquivoPT
 from contamehistorias.datasources import models, utils
 
+from django.http import HttpResponse, JsonResponse, FileResponse
 from django.conf import settings
+from django.urls import reverse
 from django.contrib import messages
-from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic import DetailView
 
 from base.forms import FormImportacaoCSV, IntervaloNoticias, FormBusca, FormBuscaTimeLine
 from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
+from base.management.commands.get_text import extract_text, extract_scripts_and_styles
 
+
+class TimeLinePorTermo(DetailView):
+    """View que vai buscar um termo e apresentar as notícias em uma timeline"""
+    template_name = 'timeline-por-termo.html'
+    model = Termo
+    slug_field = 'termo'
+
+
+def nuvem_de_palavras(request):
+    form = FormBuscaTimeLine(data=request.GET)
+    form.is_valid()
+    nuvem = [{'text': i[0], 'weight': i[1]} for i in Noticia.objects.pesquisa(**form.cleaned_data).nuvem()]
+    return JsonResponse(nuvem, safe=False)
+
+
+def arquivo_json(request):
+    form = FormBuscaTimeLine(data=request.GET)
+    form.is_valid()
+    json = Noticia.objects.pesquisa(**form.cleaned_data)
+    response = HttpResponse(json, content_type='application/json')
+    response["Content-Length" ] = len(json)
+    response['Content-Disposition' ] = 'filename=export.json'
+    return response
 
 def api_arquivopt(request):
     busca = ''
@@ -43,11 +69,12 @@ def api_arquivopt(request):
                     noticia = Noticia.objects.get(url=k['originalURL'])
                 except Noticia.DoesNotExist:
                     noticia = Noticia.objects.create(
+                        dt=datetime.strptime(k['tstamp'][:8], '%Y%m%d'),
                         url=k['originalURL'],
                         titulo=k['title'],
-                        dt=datetime.strptime(k['tstamp'][:8], '%Y%m%d'),
                         texto=k['linkToExtractedText'],
                         media=k['linkToScreenshot'],
+                        imagem=k[''],
                         fonte=k['linkToOriginalFile'],
                     )
                     noticia.save()
@@ -203,8 +230,33 @@ def noticiaId(request, noticia_id):
     })
 
 
-def get_pdf(request, noticia_id):
-    return
+def get_pdf(request, id):
+    filename = f'{settings.MEDIA_ROOT}/pdf/{id}.pdf'
+    if os.path.exists(filename):
+        return FileResponse(open(filename, 'rb'), content_type='application/pdf')
+    else:
+        messages.info(request, f'Arquivo PDF não encontrado: {id}.pdf')
+        return redirect(reverse('admin:base_noticia_change', args=(id,)))
+
+
+def scrap_text(request, noticia_id):
+    noticia = Noticia.objects.get(id=noticia_id)
+    html_dir = os.path.join(settings.MEDIA_ROOT, 'html')
+    filename = "%s/%d.%s" % (html_dir, noticia.id, 'html')
+    try:
+        headers = {'user-agent':
+                   'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+        response = requests.get(noticia.url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            soup = extract_scripts_and_styles(response.content)
+            html = extract_text(soup)
+            with open(filename, 'wb') as file:
+                file.write(html)
+        else:
+            raise
+    except Exception as e:
+        messages.info(request, f'Não foi possível carregar a URL. Realize a carga manual')
+    return redirect(reverse('admin:base_noticia_change', args=(id,)))
 
 
 def timeline(request):
@@ -224,7 +276,7 @@ def pesquisa(request):
             {
                 "media": {
                     "link": registro.url or 'http://erro',
-                    "url": registro.imagem or registro.media or 'http://erro'
+                    "url": registro.imagem_final
                 },
                 "start_date": {
                     "month": registro.dt.month,
@@ -276,17 +328,3 @@ def filtro(request):
         'data': data['noticia']
     }
     return render(request, 'pesquisa_data.html', context)
-
-
-def nuvem_de_palavras(request):
-    form = FormBuscaTimeLine(data=request.GET)
-    form.is_valid()
-    nuvem = [{'text': i[0], 'weight': i[1]} for i in Noticia.objects.pesquisa(**form.cleaned_data).nuvem()]
-    return JsonResponse(nuvem, safe=False)
-
-
-class TimeLinePorTermo(DetailView):
-    """View que vai buscar um termo e apresentar as notícias em uma timeline"""
-    template_name = 'timeline-por-termo.html'
-    model = Termo
-    slug_field = 'termo'

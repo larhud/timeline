@@ -123,7 +123,6 @@ class NoticiaQueryset(models.QuerySet):
 
     def pesquisa(self, **kwargs):
         params = {}
-        # add_criteria(params, kwargs, 'busca', 'titulo__contains')
         add_criteria(params, kwargs, 'busca', 'texto_busca', '__search')
         add_criteria(params, kwargs, 'veiculo', 'fonte', '__icontains')
         if kwargs.get('datafiltro',''):
@@ -131,16 +130,9 @@ class NoticiaQueryset(models.QuerySet):
         else:
             add_criteria(params, kwargs, 'ano_mes', 'dt', tipo_lookup='__range')
 
-        add_criteria(params, kwargs, 'busca', 'texto')
         add_criteria(params, kwargs, 'datafiltro', 'dt', tipo_lookup='__range')
         add_criteria(params, kwargs, 'ano_mes', 'dt', tipo_lookup='__range')
-
-        termo_params = {}
-        add_criteria(termo_params, kwargs, 'termo', 'termo__termo', tipo_lookup='')
-        if termo_params:
-            termo_cls = django_apps.get_model('base', 'Assunto')
-            params['pk__in'] = termo_cls.objects.filter(**termo_params).values_list('noticia__pk')
-
+        add_criteria(params, kwargs, 'termo', 'assunto__termo__id', tipo_lookup='')
         return self.filter(**params)
 
     def anos(self):
