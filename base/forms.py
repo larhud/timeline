@@ -5,18 +5,7 @@ from django.contrib.admin.views.main import ChangeList
 from django.core.validators import EMPTY_VALUES
 from django.forms import BaseInlineFormSet
 from django.utils.datetime_safe import datetime
-
-
-class LinhaFormSet(BaseInlineFormSet):
-    def full_clean(self):
-        """
-                Clean all of self.data and populate self._errors and
-                self._non_form_errors.
-                """
-        self._errors = []
-        self._non_form_errors = self.error_class()
-
-        self.clean()
+from django.forms.widgets import NumberInput, URLInput
 
 
 class InlineChangeList(object):
@@ -42,8 +31,10 @@ class IntervaloNoticias(forms.Form):
     dataFinal = forms.DateField()
 
 
-class FormBusca(forms.Form):
-    busca = forms.CharField(label='Busca', required=True)
+class BuscaArquivoPT(forms.Form):
+    busca = forms.CharField(label='Termo de Busca', required=True)
+    dtinicial = forms.DateField(label='Data Inicial:', widget=NumberInput(attrs={'type': 'date'}), required=False)
+    dtfinal = forms.DateField(label='Data Final:', widget=NumberInput(attrs={'type': 'date'}), required=False)
 
 
 class AnoMesWidget(forms.MultiWidget):

@@ -85,10 +85,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'timeline.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -127,9 +123,16 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-
 # Configurations of the tools
 ADMIN_TOOLS_INDEX_DASHBOARD = 'timeline.dashboard.CustomIndexDashboardVepeInfo'
 ADMIN_TOOLS_APP_INDEX_DASHBOARD = 'timeline.dashboard.CustomAppIndexDashboardVepeInfo'
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 4096
+
+LANGUAGE_CODE = 'pt-BR'
+TIME_ZONE = 'America/Sao_Paulo'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = False
+DATE_INPUT_FORMATS = '%d/%m/%Y'
+DATE_TIME_INPUT_FORMATS = '%d/%m/%Y %H:%m'

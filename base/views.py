@@ -5,6 +5,7 @@ from datetime import datetime, date
 from io import TextIOWrapper
 
 import requests
+from bs4 import BeautifulSoup
 
 from contamehistorias.datasources.webarchive import ArquivoPT
 from contamehistorias.datasources import models, utils
@@ -16,16 +17,16 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.views.generic import DetailView
 
-from base.forms import FormImportacaoCSV, IntervaloNoticias, FormBusca, FormBuscaTimeLine
+from base.forms import FormImportacaoCSV, IntervaloNoticias, BuscaArquivoPT, FormBuscaTimeLine
 from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
-from base.management.commands.get_text import extract_text, extract_scripts_and_styles
+from base.management.commands.get_text import extract_text, load_html
 
 
 class TimeLinePorTermo(DetailView):
     """View que vai buscar um termo e apresentar as notícias em uma timeline"""
     template_name = 'timeline-por-termo.html'
     model = Termo
-    slug_field = 'termo'
+    slug_field = 'slug'
 
 
 def nuvem_de_palavras(request):
@@ -44,9 +45,10 @@ def arquivo_json(request):
     response['Content-Disposition' ] = 'filename=export.json'
     return response
 
+
 def api_arquivopt(request):
     busca = ''
-    form = FormBusca(request.POST or None, request.FILES or None)
+    form = BuscaArquivoPT(request.POST or None, request.FILES or None)
     if request.method == 'POST':
 
         if form.is_valid():
@@ -56,37 +58,61 @@ def api_arquivopt(request):
             except Termo.DoesNotExist:
                 termo = Termo.objects.create(termo=busca)
                 termo.save()
-            requisicao = requests.get(f"https://arquivo.pt/textsearch?q={busca}")
-            registro = requisicao.json()
 
-            new_registro = []
+            url_busca = f"https://arquivo.pt/textsearch?q={busca}"
+            if form.cleaned_data['dtinicial']:
+                dt_inicial = form.cleaned_data['dtinicial'].strftime('%Y%m%d')
+                url_busca += '&from=' + dt_inicial
 
-            for k in registro['response_items']:
-                new_registro.append(k)
-                if len(k['originalURL']) > URL_MAX_LENGTH:
-                    print('URL fora do tamanho:')
-                try:
-                    noticia = Noticia.objects.get(url=k['originalURL'])
-                except Noticia.DoesNotExist:
-                    noticia = Noticia.objects.create(
-                        dt=datetime.strptime(k['tstamp'][:8], '%Y%m%d'),
-                        url=k['originalURL'],
-                        titulo=k['title'],
-                        texto=k['linkToExtractedText'],
-                        media=k['linkToScreenshot'],
-                        imagem=k[''],
-                        fonte=k['linkToOriginalFile'],
-                    )
+            if form.cleaned_data['dtfinal']:
+                dt_final = form.cleaned_data['dtfinal'].strftime('%Y%m%d')
+                url_busca += '&to=' + dt_final
+
+            tot_lidos = 0
+            tot_gravados = 0
+            while tot_gravados < 300 and url_busca:
+                requisicao = requests.get(url_busca)
+                registro = requisicao.json()
+                url_busca = registro['next_page']
+                for k in registro['response_items']:
+                    tot_lidos += 1
+                    url = k['originalURL']
+                    domain = url.split('/')[2]
+                    country = domain.split('.')[-1]
+                    if country != 'pt' or len(url) > URL_MAX_LENGTH:
+                        continue
+
+                    try:
+                        url = k['linkToNoFrame']
+                        url_hash = hashlib.sha256(url.encode('utf-8')).hexdigest()
+                        titulo = BeautifulSoup(k['title'], features="lxml").text
+                        noticia = Noticia.objects.get(url_hash=url_hash)
+                        if not noticia.revisado:
+                            noticia.titulo = titulo
+                    except Noticia.DoesNotExist:
+                        noticia = Noticia.objects.create(
+                            dt=datetime.strptime(k['tstamp'][:8], '%Y%m%d'),
+                            url=url,
+                            titulo=titulo,
+                            texto=k['snippet'],
+                            media=k['linkToScreenshot'],
+                            fonte=domain,
+                            visivel=True,
+                        )
+                    noticia.origem = 2
                     noticia.save()
+                    Assunto.objects.get_or_create(termo=termo, noticia=noticia)
+                    tot_gravados += 1
 
-                Assunto.objects.get_or_create(termo=termo, noticia=noticia)
-        messages.info(request, 'Resgistros importados com sucesso')
+        messages.info(request, f'{tot_lidos} registros lidos')
+        messages.info(request, f'{tot_gravados} registros importados com sucesso')
+
     context = {
         'form': form,
         'busca': busca
     }
 
-    return render(request, 'busca.html', context=context)
+    return render(request, 'busca.html', context)
 
 
 def importacaoCSV(request):
@@ -151,6 +177,7 @@ def importacaoCSV(request):
                         noticia.url_valida = False
                         noticia.revisado = False
                         noticia.atualizado = False
+                        noticia.origem = 1
                         tot_alteradas += 1
                         print(id_externo)
 
@@ -239,23 +266,30 @@ def get_pdf(request, id):
         return redirect(reverse('admin:base_noticia_change', args=(id,)))
 
 
-def scrap_text(request, noticia_id):
-    noticia = Noticia.objects.get(id=noticia_id)
-    html_dir = os.path.join(settings.MEDIA_ROOT, 'html')
-    filename = "%s/%d.%s" % (html_dir, noticia.id, 'html')
-    try:
-        headers = {'user-agent':
-                   'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
-        response = requests.get(noticia.url, headers=headers, timeout=10)
-        if response.status_code == 200:
-            soup = extract_scripts_and_styles(response.content)
-            html = extract_text(soup)
-            with open(filename, 'wb') as file:
-                file.write(html)
-        else:
-            raise
-    except Exception as e:
-        messages.info(request, f'Não foi possível carregar a URL. Realize a carga manual')
+def scrap_text(request, id):
+    noticia = Noticia.objects.get(id=id)
+    soup = load_html(noticia.url, id, use_cache=True)
+    if soup:
+        tag = soup.find("meta", property="og:title")
+        if tag and tag['content']:
+            noticia.titulo = tag['content']
+
+        tag = soup.find("meta", property="og:image")
+        if tag and not noticia.imagem:
+            noticia.imagem = tag['content'][:100]
+
+        tag = soup.find("meta", property="og:description")
+        if tag and not noticia.texto:
+            noticia.texto = tag['content']
+
+        noticia.texto_completo = extract_text(soup)
+        noticia.save()
+    else:
+        messages.info(request, 'Não foi possível carregar a URL. Realize a carga manual')
+        noticia.url_valida = False
+        noticia.atualizado = False
+        noticia.save()
+
     return redirect(reverse('admin:base_noticia_change', args=(id,)))
 
 
@@ -266,16 +300,17 @@ def timeline(request):
 def pesquisa(request):
     form = FormBuscaTimeLine(data=request.GET)
     form.is_valid()
-    queryset = Noticia.objects.pesquisa(**form.cleaned_data)[:500]
+    queryset = Noticia.objects.pesquisa(**form.cleaned_data)
     # Adicionada uma segunda consulta, para retornar os anos ao invés de computá-los com base nos registros limitados
     anos = Noticia.objects.pesquisa(**form.cleaned_data).anos()
     data = {'events': [], 'anos': anos}
 
-    for registro in queryset:
+    for registro in queryset[:200]:
+        url = registro.url or 'http://erro'
         data['events'].append(
             {
                 "media": {
-                    "link": registro.url or 'http://erro',
+                    "link": url,
                     "url": registro.imagem_final
                 },
                 "start_date": {
@@ -284,8 +319,8 @@ def pesquisa(request):
                     "year": registro.dt.year
                 },
                 "text": {
-                    "headline": """<p>""" + registro.titulo + """</p>""",
-                    "text": registro.texto
+                    "headline": f'<p>{registro.titulo}</p>',
+                    "text": f'{registro.texto}<br/><p><b><a href="{url}">{registro.fonte}</a></b></p>'
                 },
             }
         )

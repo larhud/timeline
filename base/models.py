@@ -10,7 +10,8 @@ from base.managers import NoticiaQueryset, test_url, build_wordcloud, AssuntoMan
 class Termo(models.Model):
     termo = models.CharField(max_length=120, unique=True)
     texto_explicativo = models.TextField(null=True)
-    id_externo = models.BigIntegerField(null=True, blank=True)
+    slug = models.CharField(max_length=60, null=True)
+    visivel = models.BooleanField('Visível', default=True)
     num_reads = models.BigIntegerField('Núm.Acessos', default=0)
 
     class Meta:
@@ -23,10 +24,16 @@ class Termo(models.Model):
     def tot_noticias(self):
         return self.assunto_set.count() or 0
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.termo)[:60]
+        super(Termo, self).save(*args, **kwargs)
+
     tot_noticias.short_description = "Total de Notícias"
 
 
 URL_MAX_LENGTH = 500
+TIPOS_ORIGEM = ((0, 'Manual'), (1, 'CSV'), (2, 'Arquivo PT'), (3, 'Twitter'), (4, 'Google Acadêmico'))
 
 
 class Noticia(models.Model):
@@ -36,11 +43,14 @@ class Noticia(models.Model):
     url_valida = models.BooleanField('URL Válida', default=False)
     atualizado = models.BooleanField('Texto atualizado', default=False)
     revisado = models.BooleanField('Texto revisado', default=False)
+    pdf_atualizado = models.BooleanField('PDF gerado', default=False)
+    visivel = models.BooleanField('Visível ao público', default=True)
     titulo = models.TextField('Título')
     texto = models.TextField('Texto Base', null=True, blank=True)
     media = models.URLField('Imagem', max_length=400, null=True, blank=True)
-    imagem = models.CharField('Imagem Local', max_length=100, null=True, blank=True)
+    imagem = models.CharField('Imagem Local', max_length=200, null=True, blank=True)
     fonte = models.CharField('Fonte da Notícia', max_length=80, null=True, blank=True)
+    origem = models.IntegerField(default=0, choices=TIPOS_ORIGEM)
     texto_completo = models.TextField('Texto Completo', null=True, blank=True)
     nuvem = models.TextField(null=True, blank=True)
     texto_busca = models.TextField(null=True, blank=True)
@@ -70,7 +80,10 @@ class Noticia(models.Model):
     @property
     def imagem_final(self):
         if self.imagem:
-            return '/'+self.imagem
+            if self.imagem[0] == '/':
+                return self.imagem
+            else:
+                return '/'+self.imagem
         elif self.media:
             return self.media
         else:
@@ -80,25 +93,29 @@ class Noticia(models.Model):
         if not self.url_hash:
             self.url_hash = hashlib.sha256(self.url.encode('utf-8')).hexdigest()
 
-        if not self.url_valida:
+        if not self.url_valida and self.visivel:
             self.url_valida = test_url(self.url)
 
-        nuvem, nuvem_sem_bigramas = self.gerar_nuvem()
-        if nuvem:
-            # Retorna apenas as palavras que tenham frequência > 2
-            # ou então toda a lista caso todos tenham frequência menor que 2
-            limit = 0
-            for word, cnt in nuvem.most_common():
-                if cnt > 2:
-                    limit += 1
-                else:
-                    break
-            if limit == 0: limit = None
-            self.nuvem = nuvem.most_common(limit)
-            busca = ''
-            for item,count in nuvem_sem_bigramas.most_common():
-                busca += item+' '
-            self.texto_busca = busca
+        if not self.visivel:
+            self.texto_busca = None
+            self.nuvem = None
+        else:
+            nuvem, nuvem_sem_bigramas = self.gerar_nuvem()
+            if nuvem:
+                # Retorna apenas as palavras que tenham frequência > 2
+                # ou então toda a lista caso todos tenham frequência menor que 2
+                limit = 0
+                for word, cnt in nuvem.most_common():
+                    if cnt > 2:
+                        limit += 1
+                    else:
+                        break
+                if limit == 0: limit = None
+                self.nuvem = nuvem.most_common(limit)
+                busca = ''
+                for item,count in nuvem_sem_bigramas.most_common():
+                    busca += item+' '
+                self.texto_busca = busca
         super(Noticia, self).save(*args, **kwargs)
 
 

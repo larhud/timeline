@@ -1,7 +1,6 @@
 import os
 import time
-
-from bs4 import BeautifulSoup
+import requests
 
 from django.core.management.base import BaseCommand
 from base.models import Noticia
@@ -11,7 +10,7 @@ from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 # from selenium.webdriver.common.by import By
 
-from .get_text import extract_text, extract_scripts_and_styles
+from .get_text import extract_text, extract_scripts_and_styles, load_html, scrap_best_image, save_image, get_url_base
 
 
 def print_pdf(url, filename):
@@ -36,6 +35,7 @@ def print_pdf(url, filename):
         return None, None
 
     html = driver.page_source
+    soup = extract_scripts_and_styles(html)
     if url != driver.current_url:
         print(f'URL Redirected: filename: {filename}')
         print(f'{url}, {driver.current_url}')
@@ -74,7 +74,7 @@ def print_pdf(url, filename):
     finally:
         driver.quit()
 
-    return html, filename
+    return soup, filename
 
 
 class Command(BaseCommand):
@@ -95,12 +95,13 @@ class Command(BaseCommand):
         tot_lidos = 0
         tot_scrap = 0
         tot_pdfs = 0
+        tot_imagens = 0
         st = time.time()
 
         if options['id']:
             dataset = Noticia.objects.filter(id=options['id'], revisado=False)
         else:
-            dataset = Noticia.objects.filter(url_valida=True, revisado=False, id__gt=299)
+            dataset = Noticia.objects.filter(url_valida=True, revisado=False, origem=2, visivel=True)
 
         for noticia in dataset:
             tot_lidos += 1
@@ -109,21 +110,36 @@ class Command(BaseCommand):
 
             # if not os.path.exists("%s/%d.pdf" % (html_path, noticia.id)):
             print(f'Scraping {noticia.url}')
-            pdf_filename = '%s/%d.pdf' % (pdf_path, noticia.id)
-            html, pdf_result = print_pdf(url=noticia.url, filename=pdf_filename)
-            if html:
+            if noticia.origem == 2:
+                soup = load_html(noticia.url, noticia.id, True)
+                # noticia.media contém por enquanto o screenshot do site por isso não pode ser utilizado
+                if not noticia.imagem:
+                    melhor_imagem = scrap_best_image(soup)
+                    if melhor_imagem:
+                        if melhor_imagem[0] == '/':
+                            base_site = get_url_base(noticia.url)
+                            melhor_imagem = base_site + melhor_imagem[1:]
+                        filename = "%s/%d" % (img_path, noticia.id)
+                        file_path = save_image(melhor_imagem, filename)
+                        noticia.imagem = file_path
+                        tot_imagens += 1
+                # TODO: Gerar o PDF a partir do snippet do Arquivo.pt
+                pdf_result = None
+                pdf_filename = None
+            else:
+                pdf_filename = '%s/%d.pdf' % (pdf_path, noticia.id)
+                soup, pdf_result = print_pdf(url=noticia.url, filename=pdf_filename)
+            if soup:
                 if pdf_result:
                     tot_pdfs += 1
                 else:
-                    if os.path.exists(pdf_filename):
+                    # caso o não se consiga criar o PDF e caso algum PDF já exista com essa numeração,
+                    # deve-se alterar para _old.
+                    if pdf_filename and os.path.exists(pdf_filename):
                         os.rename(pdf_filename, pdf_filename.replace('.pdf','_old.pdf'))
 
-                tot_scrap += 1
-                soup = extract_scripts_and_styles(html)
-                with open(f"{html_path}/{noticia.id}.html",'w',encoding='utf-8') as f:
-                    f.write(str(soup))
-
                 # get text
+                tot_scrap += 1
                 noticia.texto_completo = extract_text(soup)
                 noticia.atualizado = True
                 noticia.save()
@@ -133,6 +149,7 @@ class Command(BaseCommand):
 
         print(f'Total de registros lidos: {tot_lidos}')
         print(f'Total de pdfs gerados: {tot_pdfs}')
+        print(f'Total de novas imagens: {tot_imagens}')
         print(f'Total de textos capturados: {tot_scrap}')
         elapsed_time = (time.time() - st) / 60
         print('Execution time:', elapsed_time, 'minutes')

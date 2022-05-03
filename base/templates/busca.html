@@ -1,16 +1,17 @@
 {% extends "admin/base_site.html" %}
 {% load static  %}
 
-{% block title %}Busca{% endblock %}
+{% block title %}Busca Arquivo.PT{% endblock %}
 
 {% block content %}
+    <h1>Entre com o termo para buscar na base do Arquivo.pt</h1>
+    <p>Apenas os 200 primeiros registros serão importados.</p>
+    <p>Caso deseje importar mais registros, altere a data de início de fim de busca</p>
     <form action="" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
        <div class="d-flex">
-           <button style="padding: 10px 15px" type="submit" class="button">Buscar</button><br/>
+           <button style="padding: 10px 15px" type="submit" class="button">Iniciar a Busca</button><br/>
        </div>
-
-
     </form>
 {% endblock %}

@@ -1,10 +1,10 @@
 import ast
 import requests
 from collections import Counter
+from bs4 import BeautifulSoup
 
 from django.db import models
 from cms.models import Recurso
-from django.apps import apps as django_apps
 
 from django.core.validators import EMPTY_VALUES
 from django.db import models
@@ -14,6 +14,9 @@ def test_url(url):
     try:
         r = requests.get(url)
         if r.status_code == 200:
+            soup =  BeautifulSoup(r.content, features="html.parser")
+            if soup.title:
+                title = soup.title.string
             return True
     except Exception as e:
         return False
@@ -133,7 +136,7 @@ class NoticiaQueryset(models.QuerySet):
         add_criteria(params, kwargs, 'datafiltro', 'dt', tipo_lookup='__range')
         add_criteria(params, kwargs, 'ano_mes', 'dt', tipo_lookup='__range')
         add_criteria(params, kwargs, 'termo', 'assunto__termo__id', tipo_lookup='')
-        return self.filter(**params)
+        return self.filter(**params).filter(visivel=True).order_by('dt')
 
     def anos(self):
         """Retorna uma lista com distinct dos anos da base de notícias"""
@@ -143,11 +146,12 @@ class NoticiaQueryset(models.QuerySet):
         stopwords = Recurso.objects.get_or_create(recurso='TAGS-EXC')[0].valor or ''
         stopwords = [exc.strip() for exc in stopwords.split(',')] if stopwords else []
         result = Counter()
-        for record in self.all()[:500]:
-            nuvem = ast.literal_eval(record.nuvem)
-            for termo in nuvem:
-                if termo[0] not in stopwords:
-                    result[termo[0]] += termo[1]
+        for record in self.all():
+            if record.nuvem:
+                nuvem = ast.literal_eval(record.nuvem)
+                for termo in nuvem:
+                    if termo[0] not in stopwords:
+                        result[termo[0]] += termo[1]
         return result.most_common(40)
 
 
