@@ -322,13 +322,11 @@ def pesquisa(request):
                     "headline": f'<p>{registro.titulo}</p>',
                     "text": f'{registro.texto}<br/><p><b><a href="{url}">{registro.fonte}</a></b></p>'
                 },
+                "background": {
+                    "color": "#0075FF"
+                }
             }
         )
-
-    # quando solucionar o problema da fonte, vamos incluir o background
-    #  "background": {
-    #                     "color": "#0075FF"
-    #                 }
 
     return JsonResponse(data, safe=False)
 
