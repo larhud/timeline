@@ -1,14 +1,14 @@
 /*!
-	Timeline JS 3 
-	
+	Timeline JS 3
+
 	Designed and built by Zach Wise for the Northwestern University Knight Lab
-	
+
 	This Source Code Form is subject to the terms of the Mozilla Public
 	License, v. 2.0. If a copy of the MPL was not distributed with this
 	file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 */
-/* Includes 
+/* Includes
 ================================================== */
 /*	VARIABLES
 	BASE
@@ -261,8 +261,8 @@
   vertical-align: top;
 }
 .tl-timeline {
-  font-family: "Poppins", Helvetica, Arial, sans-serif;
-  /* VCard
+  /*font-family: "Poppins", Helvetica, Arial, sans-serif;
+   VCard
 	================================================== */
 }
 .tl-timeline h1,
@@ -301,23 +301,27 @@
 .tl-timeline h2.tl-headline-title {
   font-size: 38px;
   line-height: 38px;
+  font-family: Poppins !important;
 }
 .tl-timeline h2.tl-headline-title small {
   display: block;
   margin-top: 5px;
   font-size: 24px;
   line-height: 24px;
+  font-family: Poppins !important;
 }
 .tl-timeline h2 {
   margin-top: 20px;
   margin-bottom: 5px;
+  font-family: Poppins !important;
 }
 .tl-timeline p {
   margin-top: 5px;
   margin-bottom: 10px;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.42857143;
-  color: #666666;
+  color: #fff;
+  font-family: Poppins !important;
 }
 .tl-timeline p.lead {
   font-size: 24px;
@@ -333,7 +337,7 @@
 			background-repeat: repeat-x;
 			background-size: 2px 2px;
 			background-position: 0 @base-font-size+2;
-			text-shadow: -2px -1px 0 white, 2px -1px 0 white, -2px 1px 0 white, 2px 1px 0 white;
+			text-shadow: none !important;
 			&:hover,
 			&:focus {
 				color:@color-theme;
@@ -397,7 +401,6 @@
 }
 .tl-timeline blockquote,
 .tl-timeline blockquote p {
-  font-family: "Georgia", "Times New Roman", Times, serif;
   color: #999999;
   font-size: 24px;
   line-height: 24px;
@@ -408,7 +411,6 @@
 }
 .tl-timeline blockquote cite,
 .tl-timeline blockquote p cite {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 11px;
   color: #666666;
   display: block;
@@ -442,7 +444,6 @@
   margin: 0;
 }
 .tl-timeline .vcard {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 15px;
   line-height: 15px;
   margin-bottom: 15px;
@@ -522,7 +523,6 @@
 }
 .tl-timeline .tl-note {
   display: block;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-style: italic;
   background-color: #e6e6e6;
   font-size: 15px;
@@ -761,7 +761,7 @@
   -o-user-select: none;
   user-select: none;
 }
-/* MenuBar 
+/* MenuBar
 ================================================== */
 .tl-menubar {
   position: absolute;
@@ -803,7 +803,7 @@
 	//.translucent-background(rgb(0,0,0), .5);
 	border-top: 2px solid #000;
 	animation: invertToBlack 1s;
-	-webkit-animation:invertToBlack 1s; 
+	-webkit-animation:invertToBlack 1s;
 }
 */
 @keyframes invertToBlack {
@@ -904,7 +904,7 @@
     background: #FFF;
   }
 }
-/* MESSAGE 
+/* MESSAGE
 ================================================== */
 .tl-message,
 .tl-message-full {
@@ -936,7 +936,7 @@
   text-transform: uppercase;
   margin-top: 7.5px;
   margin-bottom: 7.5px;
-  text-shadow: 1px 1px 1px #FFF;
+  text-shadow: none !important;
 }
 .tl-message .tl-message-container .tl-message-content strong,
 .tl-message-full .tl-message-container .tl-message-content strong {
@@ -1023,7 +1023,6 @@
   left: 0px;
   font-size: 10px;
   line-height: 10px;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
   background-color: rgba(255, 255, 255, 0.85);
   padding: 3px;
   /*
@@ -1739,7 +1738,7 @@
 }
 .tl-timegroup .tl-timegroup-message {
   color: #e0e0e0;
-  text-shadow: #FFF 0px 2px 2px;
+  text-shadow: none !important;
   margin-left: 80px;
 }
 .tl-timegroup.tl-timegroup-alternate {
@@ -1889,7 +1888,7 @@
 ================================================== */
 .tlanimate {
   -webkit-transform: translateZ(0);
-  -webkit-perspective: 1000;
+  -webkit-perspective: 1000px;
   -webkit-backface-visibility: hidden;
 }
 .tl-animate {
@@ -2022,7 +2021,7 @@
 .tl-slide.tl-full-image-background,
 .tl-slide.tl-full-color-background {
   color: #FFF !important;
-  text-shadow: 1px 1px 1px #000 !important;
+  text-shadow: none !important;
 }
 .tl-slide.tl-full-image-background p,
 .tl-slide.tl-full-color-background p,
@@ -2039,7 +2038,7 @@
 .tl-slide.tl-full-image-background h6,
 .tl-slide.tl-full-color-background h6 {
   color: #FFF !important;
-  text-shadow: 1px 1px 1px #000 !important;
+  text-shadow: none !important;
 }
 .tl-slide.tl-full-image-background a,
 .tl-slide.tl-full-color-background a,
@@ -2051,7 +2050,7 @@
 .tl-slide.tl-full-color-background blockquote,
 .tl-slide.tl-full-image-background blockquote p,
 .tl-slide.tl-full-color-background blockquote p {
-  text-shadow: 1px 1px 1px #000;
+  text-shadow: none !important;
   color: #ffffff;
 }
 .tl-slide.tl-full-image-background a:hover,
@@ -2064,28 +2063,28 @@
 .tl-slide.tl-full-image-background .tl-credit,
 .tl-slide.tl-full-color-background .tl-credit {
   color: #FFF !important;
-  text-shadow: 1px 1px 1px #000 !important;
+  text-shadow: none !important;
 }
 .tl-slide.tl-full-image-background .tl-media-twitter blockquote,
 .tl-slide.tl-full-color-background .tl-media-twitter blockquote,
 .tl-slide.tl-full-image-background .tl-media-blockquote blockquote,
 .tl-slide.tl-full-color-background .tl-media-blockquote blockquote {
   color: #FFF !important;
-  text-shadow: 1px 1px 1px #000 !important;
+ text-shadow: none !important;
 }
 .tl-slide.tl-full-image-background .tl-media-twitter blockquote p,
 .tl-slide.tl-full-color-background .tl-media-twitter blockquote p,
 .tl-slide.tl-full-image-background .tl-media-blockquote blockquote p,
 .tl-slide.tl-full-color-background .tl-media-blockquote blockquote p {
   color: #FFF !important;
-  text-shadow: 1px 1px 1px #000 !important;
+  text-shadow: none !important;
 }
 .tl-slide.tl-full-image-background .vcard a,
 .tl-slide.tl-full-color-background .vcard a,
 .tl-slide.tl-full-image-background .vcard .nickname,
 .tl-slide.tl-full-color-background .vcard .nickname {
   color: #FFF !important;
-  text-shadow: 1px 1px 1px #000 !important;
+ text-shadow: none !important;
 }
 /* Full Image Background
 ================================================== */
@@ -2096,7 +2095,7 @@
   -o-background-size: cover;
   background-size: cover;
   background-position: center 25%;
-  text-shadow: 1px 1px 2px #000;
+  text-shadow: none !important;
 }
 .tl-slide.tl-full-image-background p,
 .tl-slide.tl-full-image-background h1,
@@ -2105,19 +2104,19 @@
 .tl-slide.tl-full-image-background h4,
 .tl-slide.tl-full-image-background h5,
 .tl-slide.tl-full-image-background h6 {
-  text-shadow: 1px 1px 2px #000;
+  text-shadow: none !important;
 }
 .tl-slide.tl-full-image-background .tl-caption,
 .tl-slide.tl-full-image-background .tl-credit {
-  text-shadow: 1px 1px 2px #000;
+  text-shadow: none !important;
 }
 .tl-slide.tl-full-image-background .tl-media-twitter blockquote,
 .tl-slide.tl-full-image-background .tl-media-blockquote blockquote {
-  text-shadow: 1px 1px 2px #000 !important;
+  text-shadow: none !important;
 }
 .tl-slide.tl-full-image-background .tl-media-twitter blockquote p,
 .tl-slide.tl-full-image-background .tl-media-blockquote blockquote p {
-  text-shadow: 1px 1px 2px #000 !important;
+  v
 }
 /* Color Background
 ================================================== */
@@ -2126,12 +2125,13 @@
 .tl-slide.tl-text-background .tl-text .tl-text-content-container {
   padding: 20px;
   /* Fallback for web browsers that doesn't support RGBa */
-  background: #000000 transparent;
+  background: #000000;
   /* RGBa with 0.6 opacity */
   background: rgba(0, 0, 0, 0.6);
   -webkit-border-radius: 7px;
   -moz-border-radius: 7px;
   border-radius: 7px;
+  font-family: Poppins !important;
 }
 .tl-slide.tl-text-background .tl-text .tl-text-content-container h2 {
   margin-top: 5px;
@@ -2286,7 +2286,7 @@
 .tl-slidenav-next .tl-slidenav-content-container .tl-slidenav-title,
 .tl-slidenav-previous .tl-slidenav-content-container .tl-slidenav-description,
 .tl-slidenav-next .tl-slidenav-content-container .tl-slidenav-description {
-  text-shadow: 1px 1px 1px #FFF;
+  text-shadow: none !important;
   color: #333;
 }
 .tl-slidenav-previous .tl-slidenav-content-container.tl-slidenav-inverted .tl-slidenav-icon,
@@ -2296,7 +2296,7 @@
 .tl-slidenav-previous .tl-slidenav-content-container.tl-slidenav-inverted .tl-slidenav-description,
 .tl-slidenav-next .tl-slidenav-content-container.tl-slidenav-inverted .tl-slidenav-description {
   color: #f2f2f2;
-  text-shadow: 1px 1px 1px #333;
+  text-shadow: none !important;
 }
 /* ICONS
 ================================================== */
@@ -2597,7 +2597,7 @@
 .tl-slide.tl-full-color-background a,
 .tl-slide.tl-full-image-background .vcard a,
 .tl-slide.tl-full-color-background .vcard a {
-  text-shadow: 1px 1px 1px #000;
+  text-shadow: none !important;
   color: #ffffff;
 }
 .tl-slide.tl-full-image-background a:hover,
@@ -2698,7 +2698,6 @@
 }
 .tl-text .tl-headline-date,
 .tl-text h3.tl-headline-date {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 15px;
   line-height: 15px;
   font-weight: normal;
@@ -2714,7 +2713,6 @@
 }
 .tl-text .tl-text-date {
   display: inline-block;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: normal;
   margin-top: 10px;
   font-size: 12px;
@@ -2725,7 +2723,8 @@
 .tl-full-image-background .tl-text p,
 .tl-full-color-background .tl-text p {
   color: #f2f2f2 !important;
-  text-shadow: 1px 1px 2px #000;
+  text-shadow: none !important;
+
 }
 .tl-full-image-background .tl-text .tl-headline-date,
 .tl-full-color-background .tl-text .tl-headline-date,
@@ -2961,7 +2960,7 @@
 .tl-slide.tl-full-color-background .tl-media .tl-media-wikipedia {
   padding: 20px;
   /* Fallback for web browsers that doesn't support RGBa */
-  background: #000000 transparent;
+  background: #000000;
   /* RGBa with 0.6 opacity */
   background: rgba(0, 0, 0, 0.6);
   -webkit-border-radius: 7px;
@@ -2971,7 +2970,7 @@
 .tl-slide.tl-full-image-background .tl-media .tl-media-wikipedia h4 a,
 .tl-slide.tl-full-color-background .tl-media .tl-media-wikipedia h4 a {
   color: #FFF !important;
-  text-shadow: 1px 1px 1px #000 !important;
+  text-shadow: none !important;
 }
 .tl-slide.tl-full-image-background .tl-media .tl-media-wikipedia a:hover,
 .tl-slide.tl-full-color-background .tl-media .tl-media-wikipedia a:hover {
@@ -3034,7 +3033,7 @@
 .tl-slide.tl-full-color-background .tl-media .tl-media-website {
   padding: 20px;
   /* Fallback for web browsers that doesn't support RGBa */
-  background: #000000 transparent;
+  background: #000000;
   /* RGBa with 0.6 opacity */
   background: rgba(0, 0, 0, 0.6);
   -webkit-border-radius: 7px;
@@ -3044,7 +3043,7 @@
 .tl-slide.tl-full-image-background .tl-media .tl-media-website h4 a,
 .tl-slide.tl-full-color-background .tl-media .tl-media-website h4 a {
   color: #FFF !important;
-  text-shadow: 1px 1px 1px #000 !important;
+  text-shadow: none !important;
 }
 .tl-slide.tl-full-image-background .tl-media .tl-media-website a:hover,
 .tl-slide.tl-full-color-background .tl-media .tl-media-website a:hover {
@@ -3124,5 +3123,8 @@
   text-align: left;
 }
 
-
+.tl-text-content{
+font-family: Poppins !important;}
+.tl-timeline .tl-slidenav-title p{
+font-size: 11px!important;}
 /*# sourceMappingURL=timeline.css.map*/
