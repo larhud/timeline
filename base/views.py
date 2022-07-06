@@ -1,6 +1,7 @@
 import csv
 import hashlib
 import os
+import json
 from datetime import datetime, date
 from io import TextIOWrapper
 
@@ -34,16 +35,6 @@ def nuvem_de_palavras(request):
     form.is_valid()
     nuvem = [{'text': i[0], 'weight': i[1]} for i in Noticia.objects.pesquisa(**form.cleaned_data).nuvem()]
     return JsonResponse(nuvem, safe=False)
-
-
-def arquivo_json(request):
-    form = FormBuscaTimeLine(data=request.GET)
-    form.is_valid()
-    json = Noticia.objects.pesquisa(**form.cleaned_data)
-    response = HttpResponse(json, content_type='application/json')
-    response["Content-Length" ] = len(json)
-    response['Content-Disposition' ] = 'filename=export.json'
-    return response
 
 
 def api_arquivopt(request):
@@ -361,3 +352,27 @@ def filtro(request):
         'data': data['noticia']
     }
     return render(request, 'pesquisa_data.html', context)
+
+
+def arquivo_json(request):
+    form = FormBuscaTimeLine(data=request.GET)
+    form.is_valid()
+    dataset = Noticia.objects.pesquisa(**form.cleaned_data)
+    result = []
+    for noticia in dataset:
+        result.append({
+            'dt': noticia.dt.strftime('%d/%m/%Y'),
+            'titulo': noticia.titulo,
+            'texto': noticia.texto,
+            'url': noticia.url,
+            'media': noticia.media,
+            'fonte': noticia.fonte,
+            })
+
+    json_str = json.dumps(result, indent=4, ensure_ascii=False)
+    response = HttpResponse(json_str, content_type='application/json')
+    response["Content-Length"] = len(json_str)
+    response["Content-Disposition"] = 'attachment; filename=export.json'
+    return response
+
+

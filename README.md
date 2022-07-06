@@ -10,12 +10,17 @@ O sistema foi desenvolvido em Python 3 e Django 2 e utiliza uma base MySQL/Maria
 1. Criar virtualenv
 > virtualenv timeline
 
+Outra opção é utilizar: mkvirtualenv timeline -p python3
+
 2. Ativar virtualenv
-> cd timeline
-> . bin/activate
+```
+cd timeline
+source bin/activate
+mkdir logs
+```
 
 3. Clonar o repositório
-> git clone git@github.com:josir/timeline.git
+> git clone git@github.com:larhud/timeline.git
 
 4. Entrar no repositório
 > cd timeline
