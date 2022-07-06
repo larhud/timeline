@@ -24,7 +24,7 @@ def deploy_test(context):
         connection.run('git pull')
         connection.run('../bin/python manage.py migrate')
         connection.run('../bin/python manage.py collectstatic --noinput')
-        connection.run('supervisorctl restart timeline_teste')
+        connection.run('supervisorctl restart timeline-teste')
         print('Atualização efetuada')
 
 
