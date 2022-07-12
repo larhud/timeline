@@ -14,7 +14,7 @@ def test_url(url):
     try:
         r = requests.get(url)
         if r.status_code == 200:
-            soup =  BeautifulSoup(r.content, features="html.parser")
+            soup = BeautifulSoup(r.content, features="html.parser")
             if soup.title:
                 title = soup.title.string
             return True
@@ -40,7 +40,7 @@ def remove_charlist(text, charlist, sep):
 
 # Cria uma lista com as frases criadas a partir dos delimitadores informados
 def make_phrases(texto, separators):
-    return [ x for x in remove_charlist(texto, separators, '.').split('.') if x ]
+    return [x for x in remove_charlist(texto, separators, '.').split('.') if x]
 
 
 # Texto: Texto Livre que será quebrado em palavras e Bigramas
@@ -50,12 +50,12 @@ def make_phrases(texto, separators):
 # A rotina retorna 2 counters: o primeiro com os bigramas e o segundo sem bigramas
 #
 def build_wordcloud(texto, keywords, stopwords=None):
-    texto = remove_charlist(texto, [ '’', '”', '(', ')', '`', '"', '\t', '\r', '\'' ], ' ')
-    phrase_delimiters = [ ':', '.', ',', ';', '?', '!', '\n' ]
+    texto = remove_charlist(texto, ['’', '”', '(', ')', '`', '"', '\t', '\r', '\''], ' ')
+    phrase_delimiters = [':', '.', ',', ';', '?', '!', '\n']
     words = make_phrases(texto, phrase_delimiters + [' '])
 
     if stopwords is None:
-        stopwords = [ ]
+        stopwords = []
     else:
         if len(stopwords) > 0:
             stopwords = set(stopwords)
@@ -71,12 +71,12 @@ def build_wordcloud(texto, keywords, stopwords=None):
 
     # Monta os bigramas
     phrases_list = make_phrases(texto, phrase_delimiters)
-    bigrams = [ '%s %s' % (ele, tex.split()[ i + 1 ]) for tex in phrases_list for i, ele in enumerate(tex.split()) if
-                i < len(tex.split()) - 1 ] + cleaned
+    bigrams = ['%s %s' % (ele, tex.split()[i + 1]) for tex in phrases_list for i, ele in enumerate(tex.split()) if
+               i < len(tex.split()) - 1] + cleaned
 
     for index, termo in enumerate(bigrams):
         if len(termo.split(' ')[-1]) < 3 and index + 1 < len(bigrams):
-            bigrams[ index ] = ' '.join(bigrams[ index ].split(' ')[ :-1 ]) + ' ' + bigrams[ index + 1 ]
+            bigrams[index] = ' '.join(bigrams[index].split(' ')[:-1]) + ' ' + bigrams[index + 1]
             del bigrams[index + 1]
 
     # se houver keywords, faz a separação se baseando nos delimitadores
@@ -104,6 +104,7 @@ class Search(models.Lookup):
         params = lhs_params + rhs_params
         return 'MATCH (%s) AGAINST (%s IN BOOLEAN MODE)' % (lhs, rhs), params
 
+
 models.TextField.register_lookup(Search)
 
 
@@ -128,7 +129,7 @@ class NoticiaQueryset(models.QuerySet):
         params = {}
         add_criteria(params, kwargs, 'busca', 'texto_busca', '__search')
         add_criteria(params, kwargs, 'veiculo', 'fonte', '__icontains')
-        if kwargs.get('datafiltro',''):
+        if kwargs.get('datafiltro', ''):
             add_criteria(params, kwargs, 'datafiltro', 'dt', tipo_lookup='__range')
         else:
             add_criteria(params, kwargs, 'ano_mes', 'dt', tipo_lookup='__range')
@@ -156,5 +157,10 @@ class NoticiaQueryset(models.QuerySet):
 
 
 class AssuntoManager(models.Manager):
+
     def get_queryset(self):
         return super().get_queryset().select_related('termo')
+
+    def fontes(self, termo):
+        return self.filter(termo__pk=termo).exclude(noticia__fonte='').values_list('noticia__fonte', flat=True). \
+            distinct().order_by('noticia__fonte')
