@@ -12,5 +12,6 @@ urlpatterns = [
     path('filtro_data/', views.filtro, name='filtro'),
     path('nuvem-de-palavras/', views.nuvem_de_palavras, name='nuvem_de_palavras'),
     path('arquivo_json/', views.arquivo_json, name='arquivo_json'),
-    path('arquivotm/', api.arquivoTM)
+    path('arquivotm/', api.arquivoTM),
+    path('lista-de-fontes/<int:termo>', views.lista_de_fontes, name='lista_de_fontes'),
 ]

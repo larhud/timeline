@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 from contamehistorias.datasources.webarchive import ArquivoPT
 from contamehistorias.datasources import models, utils
+from django.core.paginator import Paginator, PageNotAnInteger, InvalidPage
 
 from django.http import HttpResponse, JsonResponse, FileResponse
 from django.conf import settings
@@ -367,7 +368,7 @@ def arquivo_json(request):
             'url': noticia.url,
             'media': noticia.media,
             'fonte': noticia.fonte,
-            })
+        })
 
     json_str = json.dumps(result, indent=4, ensure_ascii=False)
     response = HttpResponse(json_str, content_type='application/json')
@@ -376,3 +377,18 @@ def arquivo_json(request):
     return response
 
 
+def lista_de_fontes(request, termo):
+    queryset = Assunto.objects.fontes(termo)
+    pagina = request.GET.get('page', 1)
+    paginator = Paginator(queryset, 30)
+
+    try:
+        fontes = paginator.page(pagina)
+    except PageNotAnInteger:
+        fontes = paginator.page(1)
+    except InvalidPage:
+        fontes = paginator.page(paginator.num_pages)
+
+    result = {'paginas': fontes.paginator.num_pages, 'lista': list(fontes.object_list)}
+
+    return JsonResponse(result)
