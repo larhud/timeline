@@ -29,12 +29,49 @@ class NoticiaFormAdd(forms.ModelForm):
 
     def clean(self):
         super().clean()
-        id = self.cleaned_data['id_externo']
         url_hash = hashlib.sha256( self.cleaned_data['url'].encode('utf-8')).hexdigest()
-        if Noticia.objects.filter(id_externo=id, assunto__termo__id=self.cleaned_data['termo'].id).count() > 0:
-            raise forms.ValidationError('Já existe uma notícia com esse identificador')
         if Noticia.objects.filter(url_hash=url_hash):
             raise forms.ValidationError('Essa URL já foi registrada')
+        id = self.cleaned_data['id_externo']
+        if id:
+            if Noticia.objects.filter(id_externo=id, assunto__termo__id=self.cleaned_data['termo'].id).count() > 0:
+                raise forms.ValidationError('Já existe uma notícia com esse identificador')
+
+
+from django.forms.widgets import ClearableFileInput
+
+
+class PDFInput(ClearableFileInput):
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        if value:
+            context['widget']['value'] = '/media/pdf/%s.pdf' % attrs['id']
+        else:
+            context['widget']['value'] = 'No file'
+        return context
+
+class NoticiaEdit(forms.ModelForm):
+    extra_field = forms.FileField(label='Espelho em PDF', required=False)
+
+    def save(self, commit=True):
+        extra_field = self.cleaned_data.get('extra_field', None)
+
+        # TODO: Gravar o arquivo
+
+        # Get the form instance so I can write to its fields
+        instance = super(NoticiaEdit, self).save(commit=commit)
+
+        # this writes the processed data to the description field
+        instance.description = self.processData(extra_field)
+
+        if commit:
+            instance.save()
+
+        return instance
+
+    class Meta:
+        model = Noticia
+        fields = "__all__"
 
 
 class NoticiaAdmin(PowerModelAdmin):
@@ -42,6 +79,7 @@ class NoticiaAdmin(PowerModelAdmin):
         ('q1', 'Texto', ['titulo', 'texto']),
         ('q2', 'URL', ['url']),
         ('q3', 'ID', ['id_externo']),
+        ('q4', 'Veículo', [ 'fonte' ]),
     )
     list_filter = ('url_valida', 'atualizado', 'revisado', 'visivel', 'assunto__termo')
     date_hierarchy = 'dt'
@@ -49,7 +87,8 @@ class NoticiaAdmin(PowerModelAdmin):
     ordering = ('id_externo',)
     fields = (('dt', 'id_externo'), 'titulo', 'url', 'texto',
               ('fonte', 'url_valida', 'atualizado', 'revisado', 'visivel'),
-              'media', 'texto_completo', 'nuvem', 'texto_busca', 'imagem')
+              'media', 'texto_completo', 'nuvem', 'texto_busca', 'imagem', 'extra_field')
+    readonly_fields = ('pdf_file',)
 
     def get_fieldsets(self, request, obj=None):
         if obj is None:
@@ -64,21 +103,31 @@ class NoticiaAdmin(PowerModelAdmin):
         if obj is None:
             self.form = NoticiaFormAdd
             kwargs['fields'] = ['url',]
+        else:
+            self.form = NoticiaEdit
         return super(NoticiaAdmin, self).get_form(request, obj, **kwargs)
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == 'texto_completo':
-            kwargs['widget'] = forms.Textarea(attrs={'rows': 15, 'cols': 110})
+            kwargs['widget'] = forms.Textarea(attrs={'rows': 15, 'cols': 120})
         if db_field.name in ['texto','titulo']:
-            kwargs['widget'] = forms.Textarea(attrs={'rows': 2, 'cols': 110})
-        return super(NoticiaAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+            kwargs['widget'] = forms.Textarea(attrs={'rows': 3, 'cols': 110})
+        # if db_field.name == 'pdf_file':
+        #    kwargs['widget'] = PDFInput()
+        return super().formfield_for_dbfield(db_field, **kwargs)
 
     def get_buttons(self, request, object_id):
         buttons = super(NoticiaAdmin, self).get_buttons(request, object_id)
         if object_id:
-            buttons.append(
-                PowerButton(url=reverse('get_pdf', kwargs={'id': object_id, }),
-                            label=u'Visualiza PDF'))
+            noticia = Noticia.objects.get(id=object_id)
+            if noticia.pdf_atualizado:
+                buttons.append(
+                    PowerButton(url=reverse('get_pdf', kwargs={'id': object_id, }),
+                                label=u'Visualiza PDF'))
+            else:
+                buttons.append(
+                    PowerButton(url=reverse('upload_pdf', kwargs={'id': object_id, }),
+                                label=u'Upload PDF'))
             buttons.append(
                 PowerButton(url=reverse('scrap_text', kwargs={'id': object_id, }),
                             label=u'Capturar Texto'))
@@ -98,7 +147,8 @@ class NoticiaAdmin(PowerModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if change:
-            super(NoticiaAdmin, self).save_model(request, obj, form, change)
+            # super().save_model(request, obj, form, change)
+            obj.save(form=form)
         else:
             id_externo = form.cleaned_data['id_externo']
             termo = form.cleaned_data['termo']

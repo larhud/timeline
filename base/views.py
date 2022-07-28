@@ -258,17 +258,32 @@ def get_pdf(request, id):
         return redirect(reverse('admin:base_noticia_change', args=(id,)))
 
 
+def upload_pdf(request, id):
+    filename = f'{settings.MEDIA_ROOT}/pdf/{id}.pdf'
+    if os.path.exists(filename):
+        return FileResponse(open(filename, 'rb'), content_type='application/pdf')
+    else:
+        messages.info(request, f'Arquivo PDF não encontrado: {id}.pdf')
+        return redirect(reverse('admin:base_noticia_change', args=(id,)))
+
+
 def scrap_text(request, id):
     noticia = Noticia.objects.get(id=id)
     soup = load_html(noticia.url, id, use_cache=True)
     if soup:
-        tag = soup.find("meta", property="og:title")
-        if tag and tag['content']:
-            noticia.titulo = tag['content']
+        if not noticia.titulo:
+            tag = soup.find("meta", property="og:title")
+            if tag and tag['content']:
+                noticia.titulo = tag['content']
+            else:
+                tag = soup.find("title")
+                if tag:
+                    noticia.titulo = tag.text
 
-        tag = soup.find("meta", property="og:image")
-        if tag and not noticia.imagem:
-            noticia.imagem = tag['content'][:100]
+        if not noticia.image:
+            tag = soup.find("meta", property="og:image")
+            if tag:
+                noticia.imagem = tag['content'][:100]
 
         tag = soup.find("meta", property="og:description")
         if tag and not noticia.texto:

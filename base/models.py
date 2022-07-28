@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.text import slugify
 from cms.models import Recurso
 
+
 from base.managers import NoticiaQueryset, test_url, build_wordcloud, AssuntoManager
 
 
@@ -11,6 +12,7 @@ class Termo(models.Model):
     termo = models.CharField(max_length=120, unique=True)
     texto_explicativo = models.TextField(null=True)
     slug = models.CharField(max_length=60, null=True)
+    imagem = models.ImageField(upload_to='uploads', null=True, blank=True)
     visivel = models.BooleanField('Visível', default=True)
     num_reads = models.BigIntegerField('Núm.Acessos', default=0)
 
@@ -59,9 +61,9 @@ class Noticia(models.Model):
     objects = NoticiaQueryset.as_manager()
 
     def gerar_nuvem(self):
-        if not self.texto_completo:
+        texto = '%s %s %s' % (self.texto_completo, self.texto, self.titulo)
+        if not texto:
             return None, None
-        texto = self.texto_completo + ' ' + self.texto + ' ' + self.titulo
         for assunto in self.assunto_set.all():
             texto += ' ' + assunto.termo.termo
 
@@ -89,12 +91,25 @@ class Noticia(models.Model):
         else:
             return '/media/img/66.jpg'
 
+    def pdf_file(self):
+        if self.pdf_atualizado:
+            return f'/media/pdf/{self.id}.jpg'
+        else:
+            return None
+
     def save(self, *args, **kwargs):
         if not self.url_hash:
             self.url_hash = hashlib.sha256(self.url.encode('utf-8')).hexdigest()
 
         if not self.url_valida and self.visivel:
             self.url_valida = test_url(self.url)
+
+        if 'form' in kwargs:
+            form = kwargs['form']
+            del kwargs['form']
+        else:
+            form = None
+        update_image = form and self.imagem and 'image' in form.changed_data
 
         if not self.visivel:
             self.texto_busca = None
@@ -117,6 +132,11 @@ class Noticia(models.Model):
                     busca += item+' '
                 self.texto_busca = busca
         super(Noticia, self).save(*args, **kwargs)
+
+        # TODO: refazer via post_save
+        # if not self.imagem and self.media:
+        #    self.media = save_image(noticia_imagem_path(), self.id)
+        #    super(Noticia, self).save(*args, **kwargs)
 
 
 class Assunto(models.Model):
