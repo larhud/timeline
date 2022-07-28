@@ -1,9 +1,9 @@
 import hashlib
 
-from django.db import models
-from django.utils.text import slugify
 from cms.models import Recurso
-
+from django.db import models
+from django.utils.safestring import mark_safe
+from django.utils.text import slugify
 
 from base.managers import NoticiaQueryset, test_url, build_wordcloud, AssuntoManager
 
@@ -93,9 +93,11 @@ class Noticia(models.Model):
 
     def pdf_file(self):
         if self.pdf_atualizado:
-            return f'/media/pdf/{self.id}.jpg'
+            return mark_safe(f'<a href="/media/pdf/{self.id}.pdf" target="_blank">Baixar Arquivo</a>')
         else:
-            return None
+            return ''
+
+    pdf_file.short_description = 'PDF Atual'
 
     def save(self, *args, **kwargs):
         if not self.url_hash:
