@@ -151,7 +151,10 @@ class NoticiaAdmin(PowerModelAdmin):
             termo = form.cleaned_data['termo']
             if not id_externo:
                 ultima_noticia = Assunto.objects.filter(termo=termo.id).order_by('id_externo').last()
-                id_externo = ultima_noticia.id_externo + 1
+                if not ultima_noticia:
+                    id_externo = 1
+                else:
+                    id_externo = ultima_noticia.id_externo + 1
             obj.dt = form.cleaned_data['dt']
             obj.url = form.cleaned_data['url']
             obj.id_externo = id_externo

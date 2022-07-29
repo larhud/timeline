@@ -280,7 +280,7 @@ def scrap_text(request, id):
                 if tag:
                     noticia.titulo = tag.text
 
-        if not noticia.image:
+        if not noticia.imagem:
             tag = soup.find("meta", property="og:image")
             if tag:
                 noticia.imagem = tag['content'][:100]
