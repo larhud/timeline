@@ -8,6 +8,7 @@ from cms.models import Recurso
 
 from django.core.validators import EMPTY_VALUES
 from django.db import models
+from django.db.models import Count
 
 
 def test_url(url):
@@ -162,5 +163,5 @@ class AssuntoManager(models.Manager):
         return super().get_queryset().select_related('termo')
 
     def fontes(self, termo):
-        return self.filter(termo__pk=termo).exclude(noticia__fonte='').values_list('noticia__fonte', flat=True). \
-            distinct().order_by('noticia__fonte')
+        return self.filter(termo__pk=termo).exclude(noticia__fonte='').values('noticia__fonte'). \
+            annotate(Count('noticia__fonte')).order_by('noticia__fonte')
