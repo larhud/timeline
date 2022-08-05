@@ -19,7 +19,8 @@ def test_url(url):
                 title = soup.title.string
             return True
     except Exception as e:
-        return False
+        None
+    return False
 
 
 def remove_charlist(text, charlist, sep):

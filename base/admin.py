@@ -16,14 +16,15 @@ class AssuntoInline(InlineModelAdmin):
 
 
 class NoticiaFormAdd(forms.ModelForm):
-    termo = forms.ModelChoiceField(label='Termo', queryset=Termo.objects.all(), required=True)
-    url = forms.URLField(widget=URLInput(attrs={'width': '120'}))
+    termo = forms.ModelChoiceField(label='Termo', queryset=Termo.objects.all(), required=True, initial=3)
+    url = forms.URLField(widget=URLInput(attrs={'size': 100}), required=True)
     dt = forms.DateField(widget=NumberInput(attrs={'type': 'date'}))
+    fonte = forms.CharField(label='Fonte da Notícia', widget=URLInput(attrs={'size': 60}), required=True)
     id_externo = forms.IntegerField(label='Identificador', required=False)
 
     class Meta:
         model = Noticia
-        fields = ['termo', 'url', 'dt', 'id_externo']
+        fields = ['termo', 'url', 'dt', 'fonte', 'id_externo']
 
     def clean(self):
         super().clean()
@@ -34,16 +35,6 @@ class NoticiaFormAdd(forms.ModelForm):
         if id:
             if Noticia.objects.filter(id_externo=id, assunto__termo__id=self.cleaned_data['termo'].id).count() > 0:
                 raise forms.ValidationError('Já existe uma notícia com esse identificador')
-
-
-class PDFInput(ClearableFileInput):
-    def get_context(self, name, value, attrs):
-        context = super().get_context(name, value, attrs)
-        if value:
-            context['widget']['value'] = '/media/pdf/%s.pdf' % attrs['id']
-        else:
-            context['widget']['value'] = 'No file'
-        return context
 
 
 class NoticiaEdit(forms.ModelForm):
@@ -90,7 +81,7 @@ class NoticiaAdmin(PowerModelAdmin):
         if obj is None:
             return (
                 (None, {
-                    'fields': ('termo', 'url', 'dt', 'id_externo')
+                    'fields': ('termo', 'url', 'dt', 'fonte', 'id_externo')
                 }),
             )
         return super(NoticiaAdmin, self).get_fieldsets(request, obj)
@@ -115,15 +106,6 @@ class NoticiaAdmin(PowerModelAdmin):
     def get_buttons(self, request, object_id):
         buttons = super(NoticiaAdmin, self).get_buttons(request, object_id)
         if object_id:
-            noticia = Noticia.objects.get(id=object_id)
-            if noticia.pdf_atualizado:
-                buttons.append(
-                    PowerButton(url=reverse('get_pdf', kwargs={'id': object_id, }),
-                                label=u'Visualiza PDF'))
-            else:
-                buttons.append(
-                    PowerButton(url=reverse('upload_pdf', kwargs={'id': object_id, }),
-                                label=u'Upload PDF'))
             buttons.append(
                 PowerButton(url=reverse('scrap_text', kwargs={'id': object_id, }),
                             label=u'Capturar Texto'))
@@ -157,6 +139,7 @@ class NoticiaAdmin(PowerModelAdmin):
                     id_externo = ultima_noticia.id_externo + 1
             obj.dt = form.cleaned_data['dt']
             obj.url = form.cleaned_data['url']
+            obj.fonte = form.cleaned_data['fonte']
             obj.id_externo = id_externo
             obj.save()
             Assunto.objects.create(noticia=obj, termo=termo, id_externo=id_externo)

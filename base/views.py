@@ -154,7 +154,7 @@ def importacaoCSV(request):
                 titulo = linha['Headline']
 
                 try:
-                    noticia = Noticia.objects.get(id_externo=id_externo)
+                    noticia = Noticia.objects.get(id_externo=id_externo, assunto__termo=termo)
                     assunto = noticia.assunto_set.filter(termo=termo, noticia=noticia)
                     found = assunto.count() == 1
                 except Noticia.DoesNotExist:
@@ -190,7 +190,8 @@ def importacaoCSV(request):
                             url=url,
                             titulo=titulo,
                             id_externo=id_externo,
-                            dt=dt)
+                            dt=dt,
+                            visivel=True)
                         tot_incluidas += 1
 
                 try:
@@ -280,10 +281,10 @@ def scrap_text(request, id):
                 if tag:
                     noticia.titulo = tag.text
 
-        if not noticia.imagem:
+        if not noticia.media:
             tag = soup.find("meta", property="og:image")
             if tag:
-                noticia.imagem = tag['content'][:100]
+                noticia.media = tag['content'][:100]
 
         tag = soup.find("meta", property="og:description")
         if tag and not noticia.texto:

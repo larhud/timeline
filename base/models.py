@@ -57,6 +57,7 @@ class Noticia(models.Model):
     nuvem = models.TextField(null=True, blank=True)
     texto_busca = models.TextField(null=True, blank=True)
     id_externo = models.IntegerField(null=True, blank=True, db_index=True)
+    notas = models.TextField(blank=True, null=True)
 
     objects = NoticiaQueryset.as_manager()
 
@@ -113,9 +114,11 @@ class Noticia(models.Model):
             form = None
         update_image = form and self.imagem and 'image' in form.changed_data
 
-        if not self.visivel:
-            self.texto_busca = None
-            self.nuvem = None
+        # só monta a nuvem se o texto fo visivel e ainda não estiver marcado como revisado
+        if not self.visivel or self.revisado:
+            if not self.revisado:
+                self.texto_busca = None
+                self.nuvem = None
         else:
             nuvem, nuvem_sem_bigramas = self.gerar_nuvem()
             if nuvem:
