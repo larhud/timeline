@@ -3,6 +3,7 @@ from . import views, api
 
 urlpatterns = [
     path('timeline/<slug:slug>/', views.TimeLinePorTermo.as_view(), name='timeline_por_termo'),
+    path('mensagem/', views.ContatoView.as_view(), name='mensagem'),
     path('get_pdf/<int:id>', views.get_pdf, name='get_pdf'),
     path('upload_pdf/<int:id>', views.upload_pdf, name='upload_pdf'),
     path('scrap_text/<int:id>', views.scrap_text, name='scrap_text'),

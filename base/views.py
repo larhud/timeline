@@ -17,11 +17,12 @@ from django.conf import settings
 from django.urls import reverse
 from django.contrib import messages
 from django.shortcuts import render, redirect
-from django.views.generic import DetailView
+from django.views.generic import DetailView, TemplateView
 
 from base.forms import FormImportacaoCSV, IntervaloNoticias, BuscaArquivoPT, FormBuscaTimeLine
 from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
 from base.management.commands.get_text import extract_text, load_html
+from django_powercms.crm.models import Contato
 
 
 class TimeLinePorTermo(DetailView):
@@ -37,6 +38,29 @@ def nuvem_de_palavras(request):
     nuvem = [{'text': i[0], 'weight': i[1]} for i in Noticia.objects.pesquisa(**form.cleaned_data).nuvem()]
     return JsonResponse(nuvem, safe=False)
 
+
+class ContatoView(TemplateView):
+    template_name = 'home2.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+    def form_valid(self, form):
+        Contato.objects.get_or_create(
+            email=form.cleaned_data.get('email'),
+            defaults={'nome': form.cleaned_data.get('nome')}
+        )
+        form.sendemail()
+
+        messages.info(self.request, u'Contato cadastrado com sucesso!')
+        form = self.form_class()
+
+        return self.response_class(
+            request=self.request,
+            template=self.template_name,
+            context=self.get_context_data(form=form),
+        )
 
 def api_arquivopt(request):
     busca = ''
