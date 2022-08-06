@@ -227,6 +227,10 @@ def importacaoCSV(request):
                     else:
                         erros.append('URL da imagem inválida (id_externo %d)' % id_externo)
                     noticia.fonte = linha['Media Credit']
+
+                    if len(linha['Texto completo raspado']) > 0 and not noticia.revisado:
+                        noticia.texto_completo = linha['Texto completo raspado']
+                        noticia.atualizado = True
                     noticia.save()
 
                     # se já houver assunto cadastrado para esse termo, atualiza o id_externo

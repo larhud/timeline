@@ -43,10 +43,10 @@ class Noticia(models.Model):
     url = models.URLField(max_length=URL_MAX_LENGTH)
     url_hash = models.CharField(max_length=64, unique=True)
     url_valida = models.BooleanField('URL Válida', default=False)
-    atualizado = models.BooleanField('Texto atualizado', default=False)
-    revisado = models.BooleanField('Texto revisado', default=False)
-    pdf_atualizado = models.BooleanField('PDF gerado', default=False)
-    visivel = models.BooleanField('Visível ao público', default=True)
+    atualizado = models.BooleanField('Texto atualizado', default=False)  # se o texto_completo foi atualizado
+    revisado = models.BooleanField('Texto revisado', default=False)  # se o texto completo foi revisado por um editor
+    pdf_atualizado = models.BooleanField('PDF gerado', default=False)  # se o PDF foi obtido com sucesso
+    visivel = models.BooleanField('Visível ao público', default=True)  # se o artigo é visivel no timeline
     titulo = models.TextField('Título')
     texto = models.TextField('Texto Base', null=True, blank=True)
     media = models.URLField('Imagem', max_length=500, null=True, blank=True)
