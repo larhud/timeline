@@ -16,7 +16,7 @@ class AssuntoInline(InlineModelAdmin):
 
 
 class NoticiaFormAdd(forms.ModelForm):
-    termo = forms.ModelChoiceField(label='Termo', queryset=Termo.objects.all(), required=True, initial=3)
+    termo = forms.ModelChoiceField(label='Termo', queryset=Termo.objects.all(), required=True, initial=Termo.objects.last().id)
     url = forms.URLField(widget=URLInput(attrs={'size': 100}), required=True)
     dt = forms.DateField(widget=NumberInput(attrs={'type': 'date'}))
     fonte = forms.CharField(label='Fonte da Notícia', widget=URLInput(attrs={'size': 60}), required=True)
@@ -27,15 +27,16 @@ class NoticiaFormAdd(forms.ModelForm):
         fields = ['termo', 'url', 'dt', 'fonte', 'id_externo']
 
     def clean(self):
-        super().clean()
-        url_hash = hashlib.sha256(self.cleaned_data['url'].encode('utf-8')).hexdigest()
-        if Noticia.objects.filter(url_hash=url_hash):
-            raise forms.ValidationError('Essa URL já foi registrada')
-        id = self.cleaned_data['id_externo']
-        if id:
-            if Noticia.objects.filter(id_externo=id, assunto__termo__id=self.cleaned_data['termo'].id).count() > 0:
-                raise forms.ValidationError('Já existe uma notícia com esse identificador')
-
+        cleaned_data = super(NoticiaFormAdd, self).clean()
+        if self.cleaned_data.get('url'):
+            url_hash = hashlib.sha256(self.cleaned_data['url'].encode('utf-8')).hexdigest()
+            if Noticia.objects.filter(url_hash=url_hash):
+                raise forms.ValidationError('Essa URL já foi registrada')
+            id = self.cleaned_data['id_externo']
+            if id:
+                if Noticia.objects.filter(id_externo=id, assunto__termo__id=self.cleaned_data['termo'].id).count() > 0:
+                    raise forms.ValidationError('Já existe uma notícia com esse identificador')
+        return cleaned_data
 
 class NoticiaEdit(forms.ModelForm):
     extra_field = forms.FileField(label='Espelho em PDF', required=False,

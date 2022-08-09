@@ -20,6 +20,9 @@ def deploy(context):
 @task
 def deploy_test(context):
     connection = Connection('200.130.45.80', user='webapp', port=8090)
+    with connection.cd('/var/webapp/timeline2/timeline/media/uploads/themes/home2'):
+        connection.run('git pull')
+
     with connection.cd('/var/webapp/timeline2/timeline'):
         connection.run('git pull')
         connection.run('../bin/python manage.py migrate')
