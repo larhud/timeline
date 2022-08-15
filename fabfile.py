@@ -63,4 +63,4 @@ def backup_producao(context):
 
 @task
 def backup_teste(context):
-    backup(Connection('200.130.45.80', user='webapp', port=8090), base='timeline2')
+    backup(Connection('200.130.45.80', user='webapp', port=8090), base='timeline_teste')
