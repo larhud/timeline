@@ -46,6 +46,7 @@ class Noticia(models.Model):
     atualizado = models.BooleanField('Texto atualizado', default=False)  # se o texto_completo foi atualizado
     revisado = models.BooleanField('Texto revisado', default=False)  # se o texto completo foi revisado por um editor
     pdf_atualizado = models.BooleanField('PDF gerado', default=False)  # se o PDF foi obtido com sucesso
+    coletanea = models.BooleanField('Coletânea', default=False)
     visivel = models.BooleanField('Visível ao público', default=True)  # se o artigo é visivel no timeline
     titulo = models.TextField('Título')
     texto = models.TextField('Texto Base', null=True, blank=True)
@@ -90,7 +91,7 @@ class Noticia(models.Model):
         elif self.media:
             return self.media
         else:
-            return '/media/img/66.jpg'
+            return self.termo.imagem
 
     def pdf_file(self):
         if self.pdf_atualizado:

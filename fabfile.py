@@ -46,12 +46,12 @@ def read_var(connection, file_path, encoding='utf-8'):
     return io_obj.getvalue().decode(encoding)
 
 
-def backup(connection):
+def backup(connection, base):
     path = '/var/webapp/timeline/'
     with connection.cd(path):
         senha = read_var(connection, path+'mysql.pwd').strip()
         filename = path + 'backup%s.gz' % datetime.strftime(datetime.now(),'%Y%m%d')
-        connection.run('mysqldump -u timeline -p"%s" timeline --no-tablespaces | gzip > %s' % (senha, filename))
+        connection.run('mysqldump -u timeline -p"%s" %s --no-tablespaces | gzip > %s' % (senha, base, filename))
         print(filename)
         connection.get(filename)
         # connection.run('rm %s' % path+filename)
@@ -59,4 +59,8 @@ def backup(connection):
 
 @task
 def backup_producao(context):
-    backup(Connection('200.130.45.80', user='webapp', port=8090))
+    backup(Connection('200.130.45.80', user='webapp', port=8090), base='timeline')
+
+@task
+def backup_teste(context):
+    backup(Connection('200.130.45.80', user='webapp', port=8090), base='timeline2')

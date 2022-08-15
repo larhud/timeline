@@ -74,9 +74,9 @@ class NoticiaAdmin(PowerModelAdmin):
     list_display = ('id_externo', 'dt', 'titulo', 'fonte', 'url_valida', 'revisado')
     ordering = ('id_externo',)
     fields = (('dt', 'id_externo'), 'titulo', 'url', 'texto',
-              ('fonte', 'url_valida', 'atualizado', 'revisado', 'visivel'),
+              ('fonte', 'url_valida', 'atualizado', 'revisado', 'coletanea', 'visivel'),
               'media', 'texto_completo', 'nuvem', 'texto_busca', 'imagem', 'extra_field', 'pdf_file')
-    readonly_fields = ('pdf_file',)
+    readonly_fields = ('pdf_file', 'imagem')
 
     def get_fieldsets(self, request, obj=None):
         if obj is None:
