@@ -20,8 +20,20 @@ class Command(BaseCommand):
             if file_path:
                 tot_scrap += 1
                 noticia.imagem = file_path
+                if noticia.notas:
+                    noticia.notas = noticia.notas.replace('[Imagem não recuperada]', '')
                 noticia.save()
             else:
+                termos = noticia.assunto_set.all()
+                if len(termos) > 0 and termos[0].termo.imagem:
+                    noticia.imagem = '/media/' + termos[0].termo.imagem.path.split('/media/')[-1]
+                else:
+                    noticia.imagem = '/static/site/img/logo.png'
+                if noticia.notas:
+                    noticia.notas += '[Imagem não recuperada]'
+                else:
+                    noticia.notas = '[Imagem não recuperada]'
+                noticia.save()
                 print(f'Imagem ({noticia.id} não carregada: {noticia.media}')
 
         print(f'Total de registros lidos: {tot_lidos}')

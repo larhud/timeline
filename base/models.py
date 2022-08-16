@@ -51,10 +51,10 @@ class Noticia(models.Model):
     titulo = models.TextField('Título')
     texto = models.TextField('Texto Base', null=True, blank=True)
     media = models.URLField('Imagem', max_length=500, null=True, blank=True)
-    imagem = models.CharField('Imagem Local', max_length=80, null=True, blank=True)
     fonte = models.CharField('Fonte da Notícia', max_length=80, null=True, blank=True)
     origem = models.IntegerField(default=0, choices=TIPOS_ORIGEM)
     texto_completo = models.TextField('Texto Completo', null=True, blank=True)
+    imagem = models.CharField('Imagem Local', max_length=80, null=True, blank=True)
     nuvem = models.TextField(null=True, blank=True)
     texto_busca = models.TextField(null=True, blank=True)
     id_externo = models.IntegerField(null=True, blank=True, db_index=True)
@@ -84,14 +84,18 @@ class Noticia(models.Model):
     @property
     def imagem_final(self):
         if self.imagem:
-            if self.imagem[0] == '/':
-                return self.imagem
-            else:
-                return '/'+self.imagem
+            return self.imagem
         elif self.media:
             return self.media
         else:
             return self.termo.imagem
+
+    @property
+    def imagem_link(self):
+        if self.imagem:
+            return mark_safe(f'<a href="{self.imagem}" target="_blank">Visualizar imagem</a>')
+        else:
+            return ''
 
     def pdf_file(self):
         if self.pdf_atualizado:
@@ -113,7 +117,11 @@ class Noticia(models.Model):
             del kwargs['form']
         else:
             form = None
-        update_image = form and self.imagem and 'image' in form.changed_data
+
+        # se a URL da imagem foi modificada, então deve-se trazer a nova imagem para o cache
+        update_image = form and self.media and 'media' in form.changed_data
+        if update_image:
+            self.imagem = None
 
         # só monta a nuvem se o texto fo visivel e ainda não estiver marcado como revisado
         if not self.visivel or self.revisado:

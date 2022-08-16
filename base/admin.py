@@ -75,8 +75,8 @@ class NoticiaAdmin(PowerModelAdmin):
     ordering = ('id_externo',)
     fields = (('dt', 'id_externo'), 'titulo', 'url', 'texto',
               ('fonte', 'url_valida', 'atualizado', 'revisado', 'coletanea', 'visivel'),
-              'media', 'texto_completo', 'nuvem', 'texto_busca', 'imagem', 'extra_field', 'pdf_file')
-    readonly_fields = ('pdf_file', 'imagem')
+              'media', 'texto_completo', 'nuvem', 'texto_busca', 'imagem_link', 'extra_field', 'pdf_file', 'notas')
+    readonly_fields = ('pdf_file', 'imagem_link')
 
     def get_fieldsets(self, request, obj=None):
         if obj is None:
@@ -98,8 +98,10 @@ class NoticiaAdmin(PowerModelAdmin):
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == 'texto_completo':
             kwargs['widget'] = forms.Textarea(attrs={'rows': 15, 'cols': 120})
-        if db_field.name in ['texto', 'titulo']:
-            kwargs['widget'] = forms.Textarea(attrs={'rows': 3, 'cols': 110})
+        elif db_field.name in ['texto', 'titulo']:
+            kwargs['widget'] = forms.Textarea(attrs={'rows': 3, 'cols': 120})
+        elif db_field.name in ['nuvem', 'texto_busca']:
+            kwargs['widget'] = forms.Textarea(attrs={'rows': 2, 'cols': 150})
         # if db_field.name == 'pdf_file':
         #    kwargs['widget'] = PDFInput()
         return super().formfield_for_dbfield(db_field, **kwargs)

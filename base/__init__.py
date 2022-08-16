@@ -9,7 +9,7 @@ def save_image(url, full_path, id_noticia):
     file_ext = server_filename.split('.')[ -1 ].split('?')[ 0 ]
     if len(file_ext) > 4 or len(file_ext) == 0 or file_ext == 'img':
         file_ext = 'jpeg'
-    full_path += '%d.%s' % (id_noticia, file_ext)
+    full_path += '/%d.%s' % (id_noticia, file_ext)
     try:
         headers = {'user-agent':
                        'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
