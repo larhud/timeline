@@ -62,6 +62,7 @@ class ContatoView(TemplateView):
             context=self.get_context_data(form=form),
         )
 
+
 def api_arquivopt(request):
     busca = ''
     form = BuscaArquivoPT(request.POST or None, request.FILES or None)
@@ -434,5 +435,30 @@ def lista_de_fontes(request, termo):
         fontes = paginator.page(paginator.num_pages)
 
     result = {'paginas': fontes.paginator.num_pages, 'lista': list(fontes.object_list)}
+
+    return JsonResponse(result)
+
+
+def lista_de_termos(request):
+    queryset = Termo.objects.filter(visivel=True).order_by('termo')
+    pagina = request.GET.get('pageNumber', 1)
+    paginator = Paginator(queryset, request.GET.get('pageSize', 4))
+
+    try:
+        termos = paginator.page(pagina)
+    except PageNotAnInteger:
+        termos = paginator.page(1)
+    except InvalidPage:
+        termos = paginator.page(paginator.num_pages)
+
+    result = {
+        'total': paginator.count,
+        'items': [
+            {
+                'termo': item.termo, 'texto': item.texto_explicativo, 'imagem': item.url_imagem,
+                'url': item.get_absolute_url()
+            } for item in termos.object_list
+        ]
+    }
 
     return JsonResponse(result)
