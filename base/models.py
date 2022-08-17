@@ -1,7 +1,9 @@
 import hashlib
 
 from cms.models import Recurso
+from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.db import models
+from django.urls import reverse_lazy
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 
@@ -33,6 +35,17 @@ class Termo(models.Model):
 
     tot_noticias.short_description = "Total de Notícias"
 
+    def get_absolute_url(self):
+        return reverse_lazy('timeline_por_termo', kwargs={'slug': self.slug})
+
+    @property
+    def url_imagem(self):
+        if self.imagem:
+            result = self.imagem.url
+        else:
+            result = static('site/img/logo.png')
+
+        return result
 
 URL_MAX_LENGTH = 500
 TIPOS_ORIGEM = ((0, 'Manual'), (1, 'CSV'), (2, 'Arquivo PT'), (3, 'Twitter'), (4, 'Google Acadêmico'))
@@ -142,8 +155,8 @@ class Noticia(models.Model):
                 if limit == 0: limit = None
                 self.nuvem = nuvem.most_common(limit)
                 busca = ''
-                for item,count in nuvem_sem_bigramas.most_common():
-                    busca += item+' '
+                for item, count in nuvem_sem_bigramas.most_common():
+                    busca += item + ' '
                 self.texto_busca = busca
         super(Noticia, self).save(*args, **kwargs)
 
