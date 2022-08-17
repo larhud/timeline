@@ -101,7 +101,11 @@ class Noticia(models.Model):
         elif self.media:
             return self.media
         else:
-            return self.termo.imagem
+            return ''
+            # if self.assunto_set.first():
+            #    return self.assunto_set.first().termo.imagem
+            #else:
+            #    return '/static/site/img/logo.png'
 
     @property
     def imagem_link(self):

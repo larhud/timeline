@@ -38,6 +38,7 @@ class NoticiaFormAdd(forms.ModelForm):
                     raise forms.ValidationError('Já existe uma notícia com esse identificador')
         return cleaned_data
 
+
 class NoticiaEdit(forms.ModelForm):
     extra_field = forms.FileField(label='Espelho em PDF', required=False,
                                   widget=ClearableFileInput(attrs={'accept': '.pdf'}))
@@ -71,7 +72,7 @@ class NoticiaAdmin(PowerModelAdmin):
     )
     list_filter = ('url_valida', 'atualizado', 'revisado', 'visivel', 'assunto__termo')
     date_hierarchy = 'dt'
-    list_display = ('id_externo', 'dt', 'titulo', 'fonte', 'url_valida', 'revisado')
+    list_display = ('id_externo', 'dt', 'titulo', 'fonte', 'url_valida', 'revisado', 'visivel')
     ordering = ('id_externo',)
     fields = (('dt', 'id_externo'), 'titulo', 'url', 'texto',
               ('fonte', 'url_valida', 'atualizado', 'revisado', 'coletanea', 'visivel'),

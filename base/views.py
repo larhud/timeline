@@ -422,6 +422,7 @@ def arquivo_json(request):
     return response
 
 
+# Faz a paginação das fontes das notícias
 def lista_de_fontes(request, termo):
     queryset = Assunto.objects.fontes(termo)
     pagina = request.GET.get('page', 1)
