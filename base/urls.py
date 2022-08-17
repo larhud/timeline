@@ -17,4 +17,5 @@ urlpatterns = [
     path('arquivotm/', api.arquivoTM),
     path('lista-de-fontes/<int:termo>', views.lista_de_fontes, name='lista_de_fontes'),
     path('lista-de-termos/', views.lista_de_termos, name='lista_de_termos'),
+    path('novo-contato/', views.novo_contato, name='novo_contato'),
 ]

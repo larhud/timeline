@@ -1,11 +1,12 @@
 from calendar import monthrange
 
+from cms.email import sendmail
+from cms.models import Recurso
 from django import forms
 from django.contrib.admin.views.main import ChangeList
 from django.core.validators import EMPTY_VALUES
-from django.forms import BaseInlineFormSet
+from django.forms.widgets import NumberInput
 from django.utils.datetime_safe import datetime
-from django.forms.widgets import NumberInput, URLInput
 
 
 class InlineChangeList(object):
@@ -97,3 +98,16 @@ class FormBuscaTimeLine(forms.Form):
             lista = []
 
         return lista
+
+
+class ContatoForm(forms.Form):
+    nome = forms.CharField(label='Nome')
+    email = forms.EmailField(label='Email')
+    telefone = forms.CharField(label='Telefone', max_length=20, required=False)
+    mensagem = forms.CharField(label='Mensagem', widget=forms.Textarea)
+    politica_privacidade = forms.BooleanField(required=True)
+
+    def sendemail(self):
+        recurso = Recurso.objects.get_or_create(recurso='EMAILADMIN')[0]
+        to = recurso.valor.split(',') if recurso.valor else []
+        sendmail('Formulário de Contato', to, params=self.cleaned_data, template='inclusao_email.html')

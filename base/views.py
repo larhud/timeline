@@ -12,14 +12,14 @@ from contamehistorias.datasources.webarchive import ArquivoPT
 from contamehistorias.datasources import models, utils
 from django.core.paginator import Paginator, PageNotAnInteger, InvalidPage
 
-from django.http import HttpResponse, JsonResponse, FileResponse
+from django.http import HttpResponse, JsonResponse, FileResponse, HttpResponseNotAllowed
 from django.conf import settings
 from django.urls import reverse
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.views.generic import DetailView, TemplateView
 
-from base.forms import FormImportacaoCSV, IntervaloNoticias, BuscaArquivoPT, FormBuscaTimeLine
+from base.forms import FormImportacaoCSV, IntervaloNoticias, BuscaArquivoPT, FormBuscaTimeLine, ContatoForm
 from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
 from base.management.commands.get_text import extract_text, load_html
 from django_powercms.crm.models import Contato
@@ -462,3 +462,19 @@ def lista_de_termos(request):
     }
 
     return JsonResponse(result)
+
+
+def novo_contato(request):
+    if request.method == 'POST':
+        form = ContatoForm(request.POST)
+
+        if form.is_valid():
+            form.sendemail()
+            data = {'success': ['Contato enviado com sucesso']}
+        else:
+            data = form.errors
+        response = JsonResponse(data)
+    else:
+        response = HttpResponseNotAllowed(['POST'])
+
+    return response
