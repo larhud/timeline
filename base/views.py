@@ -456,7 +456,7 @@ def lista_de_termos(request):
         'total': paginator.count,
         'items': [
             {
-                'termo': item.termo, 'texto': item.texto_explicativo, 'imagem': item.url_imagem,
+                'termo': item.termo, 'texto': item.texto_breve, 'imagem': item.url_imagem,
                 'url': item.get_absolute_url()
             } for item in termos.object_list
         ]

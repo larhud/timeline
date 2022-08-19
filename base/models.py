@@ -47,6 +47,11 @@ class Termo(models.Model):
 
         return result
 
+    @property
+    def texto_breve(self):
+        return self.texto_explicativo.split('.')[0]
+
+
 URL_MAX_LENGTH = 500
 TIPOS_ORIGEM = ((0, 'Manual'), (1, 'CSV'), (2, 'Arquivo PT'), (3, 'Twitter'), (4, 'Google Acadêmico'))
 
