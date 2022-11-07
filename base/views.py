@@ -466,7 +466,7 @@ def lista_de_fontes(request, termo):
 
 
 def lista_de_termos(request):
-    queryset = Termo.objects.filter(visivel=True).order_by('termo')
+    queryset = Termo.objects.filter(visivel=True).order_by(request.GET.get('order_by', 'pk'))
     pagina = request.GET.get('pageNumber', 1)
     paginator = Paginator(queryset, request.GET.get('pageSize', 4))
 
