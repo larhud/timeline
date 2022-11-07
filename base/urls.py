@@ -13,7 +13,7 @@ urlpatterns = [
     path('pesquisa/', views.pesquisa, name='pesquisa'),
     path('filtro_data/', views.filtro, name='filtro'),
     path('nuvem-de-palavras/', views.nuvem_de_palavras, name='nuvem_de_palavras'),
-    path('arquivo_json/', views.arquivo_json, name='arquivo_json'),
+    path('arquivo_json/', views.arquivo_csv, name='arquivo_csv'),
     path('arquivotm/', api.arquivoTM),
     path('lista-de-fontes/<int:termo>', views.lista_de_fontes, name='lista_de_fontes'),
     path('lista-de-termos/', views.lista_de_termos, name='lista_de_termos'),

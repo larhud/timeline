@@ -400,6 +400,28 @@ def filtro(request):
     return render(request, 'pesquisa_data.html', context)
 
 
+def arquivo_csv(request):
+    form = FormBuscaTimeLine(data=request.GET)
+    form.is_valid()
+    dataset = Noticia.objects.pesquisa(**form.cleaned_data)
+    result = []
+
+    csv_file = 'dt;titulo;texto;url;media;fonte\n'
+    for noticia in dataset:
+        csv_file += '%s;"%s";"%s";"%s";"%s"\n' % (
+            noticia.dt.strftime('%d/%m/%Y'),
+            noticia.titulo,
+            noticia.texto,
+            noticia.url,
+            noticia.media,
+            noticia.fonte,
+        )
+
+    response = HttpResponse(csv_file, content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="timeline.csv"'
+    return response
+
+
 def arquivo_json(request):
     form = FormBuscaTimeLine(data=request.GET)
     form.is_valid()
@@ -417,9 +439,9 @@ def arquivo_json(request):
 
     json_str = json.dumps(result, indent=4, ensure_ascii=False)
     response = HttpResponse(json_str, content_type='application/json')
-    response["Content-Length"] = len(json_str)
     response["Content-Disposition"] = 'attachment; filename=export.json'
     return response
+
 
 
 # Faz a paginação das fontes das notícias
