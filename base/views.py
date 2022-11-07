@@ -403,12 +403,15 @@ def filtro(request):
 def arquivo_csv(request):
     form = FormBuscaTimeLine(data=request.GET)
     form.is_valid()
+    if form.cleaned_data.get('datafiltro'):
+        del form.cleaned_data['ano_mes']
+
     dataset = Noticia.objects.pesquisa(**form.cleaned_data)
     result = []
 
     csv_file = 'dt;titulo;texto;url;media;fonte\n'
     for noticia in dataset:
-        csv_file += '%s;"%s";"%s";"%s";"%s"\n' % (
+        csv_file += '%s;"%s";"%s";"%s";"%s";"%s"\n' % (
             noticia.dt.strftime('%d/%m/%Y'),
             noticia.titulo,
             noticia.texto,

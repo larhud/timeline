@@ -136,8 +136,6 @@ class NoticiaQueryset(models.QuerySet):
         else:
             add_criteria(params, kwargs, 'ano_mes', 'dt', tipo_lookup='__range')
 
-        add_criteria(params, kwargs, 'datafiltro', 'dt', tipo_lookup='__range')
-        add_criteria(params, kwargs, 'ano_mes', 'dt', tipo_lookup='__range')
         add_criteria(params, kwargs, 'termo', 'assunto__termo__id', tipo_lookup='')
         return self.filter(**params).filter(visivel=True).order_by('dt')
 
