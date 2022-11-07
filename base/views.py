@@ -403,9 +403,6 @@ def filtro(request):
 def arquivo_csv(request):
     form = FormBuscaTimeLine(data=request.GET)
     form.is_valid()
-    if form.cleaned_data.get('datafiltro'):
-        del form.cleaned_data['ano_mes']
-
     dataset = Noticia.objects.pesquisa(**form.cleaned_data)
     result = []
 
@@ -444,7 +441,6 @@ def arquivo_json(request):
     response = HttpResponse(json_str, content_type='application/json')
     response["Content-Disposition"] = 'attachment; filename=export.json'
     return response
-
 
 
 # Faz a paginação das fontes das notícias
