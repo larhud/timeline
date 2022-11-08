@@ -404,7 +404,6 @@ def arquivo_csv(request):
     form = FormBuscaTimeLine(data=request.GET)
     form.is_valid()
     dataset = Noticia.objects.pesquisa(**form.cleaned_data)
-    result = []
 
     csv_file = 'dt;titulo;texto;url;media;fonte\n'
     for noticia in dataset:
