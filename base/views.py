@@ -499,3 +499,13 @@ def novo_contato(request):
         response = HttpResponseNotAllowed(['POST'])
 
     return response
+
+def quebra_termo(request, id):
+
+    noticias_termo = Noticia.objects.filter(assunto__termo=id) #noticias do termo passado
+    latest_dt = noticias_termo.latest('dt').dt      #latest date
+    earliest_dt = noticias_termo.earliest('dt').dt  #earliest date
+    
+    teste_retorno = earliest_dt.strftime('%Y/%m/%d') + ' ' + latest_dt.strftime('%Y/%m/%d')
+
+    return teste_retorno
