@@ -12,7 +12,7 @@ def save_image(url, full_path, id_noticia):
     full_path += '/%d.%s' % (id_noticia, file_ext)
     try:
         headers = {'user-agent':
-                       'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+                   'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
         response = requests.get(url, headers=headers, timeout=10)
         if response.status_code == 200:
             with open(full_path, 'wb') as file:

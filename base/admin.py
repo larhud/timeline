@@ -113,6 +113,9 @@ class NoticiaAdmin(PowerModelAdmin):
             buttons.append(
                 PowerButton(url=reverse('scrap_text', kwargs={'id': object_id, }),
                             label=u'Capturar Texto'))
+            buttons.append(
+                PowerButton(url=reverse('scrap_image', kwargs={'id': object_id, }),
+                            label=u'Validar Imagem'))
         return buttons
 
     def get_actions(self, request):

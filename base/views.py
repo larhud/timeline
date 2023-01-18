@@ -19,10 +19,12 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.views.generic import DetailView, TemplateView
 
+from base import save_image
 from base.forms import FormImportacaoCSV, IntervaloNoticias, BuscaArquivoPT, FormBuscaTimeLine, ContatoForm
 from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
 from base.management.commands.get_text import extract_text, load_html
 from django_powercms.crm.models import Contato
+from timeline.settings import noticia_imagem_path
 
 
 class TimeLinePorTermo(DetailView):
@@ -326,6 +328,20 @@ def scrap_text(request, id):
         noticia.url_valida = False
         noticia.atualizado = False
         noticia.save()
+
+    return redirect(reverse('admin:base_noticia_change', args=(id,)))
+
+
+def scrap_image(request, id):
+    noticia = Noticia.objects.get(id=id)
+    img_path = noticia_imagem_path()
+    file_path = save_image(noticia.media, img_path, noticia.id)
+    if file_path:
+        noticia.imagem = file_path
+        noticia.save()
+        messages.info(request, 'Imagem validada e armazenada')
+    else:
+        messages.error(request, 'Não foi possível carregar a imagem. Verifique a URL da imagem')
 
     return redirect(reverse('admin:base_noticia_change', args=(id,)))
 
