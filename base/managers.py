@@ -20,7 +20,8 @@ def test_url(url):
                 title = soup.title.string
             return True
     except Exception as e:
-        return False
+        None
+    return False
 
 
 def remove_charlist(text, charlist, sep):
@@ -135,8 +136,6 @@ class NoticiaQueryset(models.QuerySet):
         else:
             add_criteria(params, kwargs, 'ano_mes', 'dt', tipo_lookup='__range')
 
-        add_criteria(params, kwargs, 'datafiltro', 'dt', tipo_lookup='__range')
-        add_criteria(params, kwargs, 'ano_mes', 'dt', tipo_lookup='__range')
         add_criteria(params, kwargs, 'termo', 'assunto__termo__id', tipo_lookup='')
         return self.filter(**params).filter(visivel=True).order_by('dt')
 
@@ -163,5 +162,5 @@ class AssuntoManager(models.Manager):
         return super().get_queryset().select_related('termo')
 
     def fontes(self, termo):
-        return self.filter(termo__pk=termo).exclude(noticia__fonte='').values('noticia__fonte'). \
-            annotate(Count('noticia__fonte')).order_by('noticia__fonte')
+        return self.filter(termo__pk=termo, noticia__visivel=True).exclude(noticia__fonte='').\
+            values('noticia__fonte').annotate(Count('noticia__fonte')).order_by('noticia__fonte')

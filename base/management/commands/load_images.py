@@ -3,29 +3,38 @@ import requests
 
 from django.core.management.base import BaseCommand
 from base.models import Noticia
-from .get_text import save_image
+from timeline.settings import noticia_imagem_path
+from base import save_image
 
 
 class Command(BaseCommand):
     help = 'Import as imagens em cache'
 
     def handle(self, *args, **options):
-        base_dir = os.path.dirname(os.path.abspath(__file__)).split('/')[:-3]
-        base_dir = '/'.join(base_dir)
-        img_path = os.path.join('/', base_dir, 'media', 'img')
-        os.makedirs(img_path, exist_ok=True)
+        img_path = noticia_imagem_path()
         tot_lidos = 0
         tot_scrap = 0
-        for noticia in Noticia.objects.filter(url_valida=True, media__isnull=False, origem=2):
+        for noticia in Noticia.objects.filter(url_valida=True, media__isnull=False, imagem__isnull=True):
             tot_lidos += 1
-            filename = "%s/%d" % (img_path, noticia.id)
-            file_path = save_image(noticia.media, img_path)
+            file_path = save_image(noticia.media, img_path, noticia.id)
             if file_path:
                 tot_scrap += 1
                 noticia.imagem = file_path
+                if noticia.notas:
+                    noticia.notas = noticia.notas.replace('[Imagem não recuperada]', '')
                 noticia.save()
             else:
-                print(f'Imagem não carregada: {noticia.id}')
+                termos = noticia.assunto_set.all()
+                if len(termos) > 0 and termos[0].termo.imagem:
+                    noticia.imagem = '/media/' + termos[0].termo.imagem.path.split('/media/')[-1]
+                else:
+                    noticia.imagem = '/static/site/img/logo.png'
+                if noticia.notas:
+                    noticia.notas += '[Imagem não recuperada]'
+                else:
+                    noticia.notas = '[Imagem não recuperada]'
+                noticia.save()
+                print(f'Imagem ({noticia.id} não carregada: {noticia.media}')
 
         print(f'Total de registros lidos: {tot_lidos}')
         print(f'Total de registros capturados: {tot_scrap}')

@@ -101,7 +101,8 @@ class Command(BaseCommand):
         if options['id']:
             dataset = Noticia.objects.filter(id=options['id'], revisado=False)
         else:
-            dataset = Noticia.objects.filter(url_valida=True, revisado=False, origem=2, visivel=True)
+            dataset = Noticia.objects.filter(url_valida=True, atualizado=False,
+                                             revisado=False, origem=2, visivel=True)
 
         for noticia in dataset:
             tot_lidos += 1

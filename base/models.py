@@ -1,8 +1,11 @@
 import hashlib
 
-from django.db import models
-from django.utils.text import slugify
 from cms.models import Recurso
+from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.db import models
+from django.urls import reverse_lazy
+from django.utils.safestring import mark_safe
+from django.utils.text import slugify
 
 from base.managers import NoticiaQueryset, test_url, build_wordcloud, AssuntoManager
 
@@ -11,6 +14,7 @@ class Termo(models.Model):
     termo = models.CharField(max_length=120, unique=True)
     texto_explicativo = models.TextField(null=True)
     slug = models.CharField(max_length=60, null=True)
+    imagem = models.ImageField(upload_to='uploads', null=True, blank=True)
     visivel = models.BooleanField('Visível', default=True)
     num_reads = models.BigIntegerField('Núm.Acessos', default=0)
 
@@ -31,6 +35,22 @@ class Termo(models.Model):
 
     tot_noticias.short_description = "Total de Notícias"
 
+    def get_absolute_url(self):
+        return reverse_lazy('timeline_por_termo', kwargs={'slug': self.slug})
+
+    @property
+    def url_imagem(self):
+        if self.imagem:
+            result = self.imagem.url
+        else:
+            result = static('site/img/logo.png')
+
+        return result
+
+    @property
+    def texto_breve(self):
+        return self.texto_explicativo.split('.')[0]
+
 
 URL_MAX_LENGTH = 500
 TIPOS_ORIGEM = ((0, 'Manual'), (1, 'CSV'), (2, 'Arquivo PT'), (3, 'Twitter'), (4, 'Google Acadêmico'))
@@ -41,27 +61,29 @@ class Noticia(models.Model):
     url = models.URLField(max_length=URL_MAX_LENGTH)
     url_hash = models.CharField(max_length=64, unique=True)
     url_valida = models.BooleanField('URL Válida', default=False)
-    atualizado = models.BooleanField('Texto atualizado', default=False)
-    revisado = models.BooleanField('Texto revisado', default=False)
-    pdf_atualizado = models.BooleanField('PDF gerado', default=False)
-    visivel = models.BooleanField('Visível ao público', default=True)
+    atualizado = models.BooleanField('Texto atualizado', default=False)  # se o texto_completo foi atualizado
+    revisado = models.BooleanField('Texto revisado', default=False)  # se o texto completo foi revisado por um editor
+    pdf_atualizado = models.BooleanField('PDF gerado', default=False)  # se o PDF foi obtido com sucesso
+    coletanea = models.BooleanField('Coletânea', default=False)
+    visivel = models.BooleanField('Visível ao público', default=True)  # se o artigo é visivel no timeline
     titulo = models.TextField('Título')
     texto = models.TextField('Texto Base', null=True, blank=True)
-    media = models.URLField('Imagem', max_length=400, null=True, blank=True)
-    imagem = models.CharField('Imagem Local', max_length=200, null=True, blank=True)
+    media = models.URLField('Imagem', max_length=500, null=True, blank=True)
     fonte = models.CharField('Fonte da Notícia', max_length=80, null=True, blank=True)
     origem = models.IntegerField(default=0, choices=TIPOS_ORIGEM)
     texto_completo = models.TextField('Texto Completo', null=True, blank=True)
+    imagem = models.CharField('Imagem Local', max_length=80, null=True, blank=True)
     nuvem = models.TextField(null=True, blank=True)
     texto_busca = models.TextField(null=True, blank=True)
     id_externo = models.IntegerField(null=True, blank=True, db_index=True)
+    notas = models.TextField(blank=True, null=True)
 
     objects = NoticiaQueryset.as_manager()
 
     def gerar_nuvem(self):
-        if not self.texto_completo:
+        texto = '%s %s %s' % (self.texto_completo, self.texto, self.titulo)
+        if not texto:
             return None, None
-        texto = self.texto_completo + ' ' + self.texto + ' ' + self.titulo
         for assunto in self.assunto_set.all():
             texto += ' ' + assunto.termo.termo
 
@@ -80,14 +102,30 @@ class Noticia(models.Model):
     @property
     def imagem_final(self):
         if self.imagem:
-            if self.imagem[0] == '/':
-                return self.imagem
-            else:
-                return '/'+self.imagem
+            return self.imagem
         elif self.media:
             return self.media
         else:
-            return '/media/img/66.jpg'
+            return ''
+            # if self.assunto_set.first():
+            #    return self.assunto_set.first().termo.imagem
+            #else:
+            #    return '/static/site/img/logo.png'
+
+    @property
+    def imagem_link(self):
+        if self.imagem:
+            return mark_safe(f'<a href="{self.imagem}" target="_blank">Visualizar imagem</a>')
+        else:
+            return ''
+
+    def pdf_file(self):
+        if self.pdf_atualizado:
+            return mark_safe(f'<a href="/media/pdf/{self.id}.pdf" target="_blank">Baixar Arquivo</a>')
+        else:
+            return ''
+
+    pdf_file.short_description = 'PDF Atual'
 
     def save(self, *args, **kwargs):
         if not self.url_hash:
@@ -96,9 +134,22 @@ class Noticia(models.Model):
         if not self.url_valida and self.visivel:
             self.url_valida = test_url(self.url)
 
-        if not self.visivel:
-            self.texto_busca = None
-            self.nuvem = None
+        if 'form' in kwargs:
+            form = kwargs['form']
+            del kwargs['form']
+        else:
+            form = None
+
+        # se a URL da imagem foi modificada, então deve-se trazer a nova imagem para o cache
+        update_image = form and self.media and 'media' in form.changed_data
+        if update_image:
+            self.imagem = None
+
+        # só monta a nuvem se o texto fo visivel e ainda não estiver marcado como revisado
+        if not self.visivel or self.revisado:
+            if not self.revisado:
+                self.texto_busca = None
+                self.nuvem = None
         else:
             nuvem, nuvem_sem_bigramas = self.gerar_nuvem()
             if nuvem:
@@ -113,10 +164,15 @@ class Noticia(models.Model):
                 if limit == 0: limit = None
                 self.nuvem = nuvem.most_common(limit)
                 busca = ''
-                for item,count in nuvem_sem_bigramas.most_common():
-                    busca += item+' '
+                for item, count in nuvem_sem_bigramas.most_common():
+                    busca += item + ' '
                 self.texto_busca = busca
         super(Noticia, self).save(*args, **kwargs)
+
+        # TODO: refazer via post_save
+        # if not self.imagem and self.media:
+        #    self.media = save_image(noticia_imagem_path(), self.id)
+        #    super(Noticia, self).save(*args, **kwargs)
 
 
 class Assunto(models.Model):

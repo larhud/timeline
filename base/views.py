@@ -12,16 +12,19 @@ from contamehistorias.datasources.webarchive import ArquivoPT
 from contamehistorias.datasources import models, utils
 from django.core.paginator import Paginator, PageNotAnInteger, InvalidPage
 
-from django.http import HttpResponse, JsonResponse, FileResponse
+from django.http import HttpResponse, JsonResponse, FileResponse, HttpResponseNotAllowed
 from django.conf import settings
 from django.urls import reverse
 from django.contrib import messages
 from django.shortcuts import render, redirect
-from django.views.generic import DetailView
+from django.views.generic import DetailView, TemplateView
 
-from base.forms import FormImportacaoCSV, IntervaloNoticias, BuscaArquivoPT, FormBuscaTimeLine
+from base import save_image
+from base.forms import FormImportacaoCSV, IntervaloNoticias, BuscaArquivoPT, FormBuscaTimeLine, ContatoForm
 from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
 from base.management.commands.get_text import extract_text, load_html
+from django_powercms.crm.models import Contato
+from timeline.settings import noticia_imagem_path
 
 
 class TimeLinePorTermo(DetailView):
@@ -36,6 +39,30 @@ def nuvem_de_palavras(request):
     form.is_valid()
     nuvem = [{'text': i[0], 'weight': i[1]} for i in Noticia.objects.pesquisa(**form.cleaned_data).nuvem()]
     return JsonResponse(nuvem, safe=False)
+
+
+class ContatoView(TemplateView):
+    template_name = 'home2.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+    def form_valid(self, form):
+        Contato.objects.get_or_create(
+            email=form.cleaned_data.get('email'),
+            defaults={'nome': form.cleaned_data.get('nome')}
+        )
+        form.sendemail()
+
+        messages.info(self.request, u'Contato cadastrado com sucesso!')
+        form = self.form_class()
+
+        return self.response_class(
+            request=self.request,
+            template=self.template_name,
+            context=self.get_context_data(form=form),
+        )
 
 
 def api_arquivopt(request):
@@ -154,7 +181,7 @@ def importacaoCSV(request):
                 titulo = linha['Headline']
 
                 try:
-                    noticia = Noticia.objects.get(id_externo=id_externo)
+                    noticia = Noticia.objects.get(id_externo=id_externo, assunto__termo=termo)
                     assunto = noticia.assunto_set.filter(termo=termo, noticia=noticia)
                     found = assunto.count() == 1
                 except Noticia.DoesNotExist:
@@ -190,7 +217,8 @@ def importacaoCSV(request):
                             url=url,
                             titulo=titulo,
                             id_externo=id_externo,
-                            dt=dt)
+                            dt=dt,
+                            visivel=True)
                         tot_incluidas += 1
 
                 try:
@@ -202,6 +230,10 @@ def importacaoCSV(request):
                     else:
                         erros.append('URL da imagem inválida (id_externo %d)' % id_externo)
                     noticia.fonte = linha['Media Credit']
+
+                    if len(linha['Texto completo raspado']) > 0 and not noticia.revisado:
+                        noticia.texto_completo = linha['Texto completo raspado']
+                        noticia.atualizado = True
                     noticia.save()
 
                     # se já houver assunto cadastrado para esse termo, atualiza o id_externo
@@ -258,17 +290,32 @@ def get_pdf(request, id):
         return redirect(reverse('admin:base_noticia_change', args=(id,)))
 
 
+def upload_pdf(request, id):
+    filename = f'{settings.MEDIA_ROOT}/pdf/{id}.pdf'
+    if os.path.exists(filename):
+        return FileResponse(open(filename, 'rb'), content_type='application/pdf')
+    else:
+        messages.info(request, f'Arquivo PDF não encontrado: {id}.pdf')
+        return redirect(reverse('admin:base_noticia_change', args=(id,)))
+
+
 def scrap_text(request, id):
     noticia = Noticia.objects.get(id=id)
     soup = load_html(noticia.url, id, use_cache=True)
     if soup:
-        tag = soup.find("meta", property="og:title")
-        if tag and tag['content']:
-            noticia.titulo = tag['content']
+        if not noticia.titulo:
+            tag = soup.find("meta", property="og:title")
+            if tag and tag['content']:
+                noticia.titulo = tag['content']
+            else:
+                tag = soup.find("title")
+                if tag:
+                    noticia.titulo = tag.text
 
-        tag = soup.find("meta", property="og:image")
-        if tag and not noticia.imagem:
-            noticia.imagem = tag['content'][:100]
+        if not noticia.media:
+            tag = soup.find("meta", property="og:image")
+            if tag:
+                noticia.media = tag['content'][:100]
 
         tag = soup.find("meta", property="og:description")
         if tag and not noticia.texto:
@@ -281,6 +328,20 @@ def scrap_text(request, id):
         noticia.url_valida = False
         noticia.atualizado = False
         noticia.save()
+
+    return redirect(reverse('admin:base_noticia_change', args=(id,)))
+
+
+def scrap_image(request, id):
+    noticia = Noticia.objects.get(id=id)
+    img_path = noticia_imagem_path()
+    file_path = save_image(noticia.media, img_path, noticia.id)
+    if file_path:
+        noticia.imagem = file_path
+        noticia.save()
+        messages.info(request, 'Imagem validada e armazenada')
+    else:
+        messages.error(request, 'Não foi possível carregar a imagem. Verifique a URL da imagem')
 
     return redirect(reverse('admin:base_noticia_change', args=(id,)))
 
@@ -355,6 +416,28 @@ def filtro(request):
     return render(request, 'pesquisa_data.html', context)
 
 
+def arquivo_csv(request):
+    form = FormBuscaTimeLine(data=request.GET)
+    form.is_valid()
+    dataset = Noticia.objects.pesquisa(**form.cleaned_data)
+
+    csv_file = 'dt;titulo;texto;texto_completo;url;media;fonte\n'
+    for noticia in dataset:
+        csv_file += '%s;"%s";"%s";"%s";"%s";"%s";"%s"\n' % (
+            noticia.dt.strftime('%d/%m/%Y'),
+            noticia.titulo,
+            noticia.texto,
+            noticia.texto_completo.replace('"', ''),
+            noticia.url,
+            noticia.media,
+            noticia.fonte,
+        )
+
+    response = HttpResponse(csv_file, content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="timeline.csv"'
+    return response
+
+
 def arquivo_json(request):
     form = FormBuscaTimeLine(data=request.GET)
     form.is_valid()
@@ -372,11 +455,11 @@ def arquivo_json(request):
 
     json_str = json.dumps(result, indent=4, ensure_ascii=False)
     response = HttpResponse(json_str, content_type='application/json')
-    response["Content-Length"] = len(json_str)
     response["Content-Disposition"] = 'attachment; filename=export.json'
     return response
 
 
+# Faz a paginação das fontes das notícias
 def lista_de_fontes(request, termo):
     queryset = Assunto.objects.fontes(termo)
     pagina = request.GET.get('page', 1)
@@ -392,3 +475,44 @@ def lista_de_fontes(request, termo):
     result = {'paginas': fontes.paginator.num_pages, 'lista': list(fontes.object_list)}
 
     return JsonResponse(result)
+
+
+def lista_de_termos(request):
+    queryset = Termo.objects.filter(visivel=True).order_by(request.GET.get('order_by', 'pk'))
+    pagina = request.GET.get('pageNumber', 1)
+    paginator = Paginator(queryset, request.GET.get('pageSize', 4))
+
+    try:
+        termos = paginator.page(pagina)
+    except PageNotAnInteger:
+        termos = paginator.page(1)
+    except InvalidPage:
+        termos = paginator.page(paginator.num_pages)
+
+    result = {
+        'total': paginator.count,
+        'items': [
+            {
+                'termo': item.termo, 'texto': item.texto_breve, 'imagem': item.url_imagem,
+                'url': item.get_absolute_url()
+            } for item in termos.object_list
+        ]
+    }
+
+    return JsonResponse(result)
+
+
+def novo_contato(request):
+    if request.method == 'POST':
+        form = ContatoForm(request.POST)
+
+        if form.is_valid():
+            form.sendemail()
+            data = {'success': ['Contato enviado com sucesso']}
+        else:
+            data = form.errors
+        response = JsonResponse(data)
+    else:
+        response = HttpResponseNotAllowed(['POST'])
+
+    return response

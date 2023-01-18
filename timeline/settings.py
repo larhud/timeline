@@ -18,7 +18,6 @@ PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # powe
 
 BASE_DIR = PROJECT_DIR
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
@@ -136,3 +135,11 @@ USE_L10N = True
 USE_TZ = False
 DATE_INPUT_FORMATS = '%d/%m/%Y'
 DATE_TIME_INPUT_FORMATS = '%d/%m/%Y %H:%m'
+
+
+def noticia_imagem_path():
+    base_dir = os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]
+    base_dir = '/'.join(base_dir)
+    img_path = os.path.join('/', base_dir, 'media', 'img')
+    os.makedirs(img_path, exist_ok=True)
+    return img_path
