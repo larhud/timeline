@@ -2,8 +2,10 @@ import csv
 import hashlib
 import os
 import json
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from io import TextIOWrapper
+
+import time
 
 import requests
 from bs4 import BeautifulSoup
@@ -503,9 +505,22 @@ def novo_contato(request):
 def quebra_termo(request, id):
 
     noticias_termo = Noticia.objects.filter(assunto__termo=id) #noticias do termo passado
-    latest_dt = noticias_termo.latest('dt').dt      #latest date
-    earliest_dt = noticias_termo.earliest('dt').dt  #earliest date
+    latest_dt = noticias_termo.latest('dt').dt                              #latest date
+    earliest_dt = noticias_termo.earliest('dt').dt                          #earliest date
     
-    teste_retorno = earliest_dt.strftime('%Y/%m/%d') + ' ' + latest_dt.strftime('%Y/%m/%d')
+    earliest_datetime = datetime.combine(earliest_dt, datetime.min.time())  #date to datetime
+    latest_datetime = datetime.combine(latest_dt, datetime.min.time())      #date to datetime
 
-    return teste_retorno
+    earliest_timestamp = datetime.timestamp(earliest_datetime)      #datetime to timestamp
+    latest_timestamp = datetime.timestamp(latest_datetime)                   #datetime to timestamp
+
+    periodo = latest_timestamp - earliest_timestamp                         #periodo  
+    tam_slot = periodo/10;                               #cada slot tem 1/10 do tamanho do periodo
+
+    l_slots = [] 
+    for i in range(0, 10, 1):
+        l_slots.append([date.fromtimestamp(earliest_timestamp+((i)*tam_slot)) , date.fromtimestamp(earliest_timestamp+((i+1)*tam_slot)) - timedelta(days=1)])
+
+    result = {'ID': id, 'lista': l_slots, 'data da primeira noticia': date.fromtimestamp(earliest_timestamp), 'data da ultima noticia': date.fromtimestamp(latest_timestamp)}
+
+    return JsonResponse(result)
