@@ -1,0 +1,24 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Nuvem Cronologica{% endblock %}
+
+{% block content %}
+<table class="table">
+    <thead>
+        <tr>
+            {% for k in header %}
+            <th>{{k}}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in rows %}
+            <tr>
+                <td>{{r.dt_inicial}}</td>
+                <td>{{r.dt_final}}</td>
+                <td>{{r.termos}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

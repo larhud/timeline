@@ -503,6 +503,35 @@ def novo_contato(request):
     return response
 
 def quebra_termo(request, id):
+    template_name = 'nuvem_crono.html'
+
+    result = nuvem_cronologica(id)  #resultado da nuvem_crono em JsonResponse
+    for el in result:
+        result = json.loads(el.decode("utf-8")) #Transforma o result de JsonResponse->String->Dicionario
+
+    header = {'header':['Dt Inicial', 'Dt Final', 'Termos']}
+    rows = { 'rows': []}
+
+    t_list = [[],[],[],[],[],[],[],[],[],[]]
+    for i in range(0, 10, 1):
+        for j in range(2, 6, 1):
+
+            t_list[i].append(result['lista'][i][j][0])
+            
+        rows['rows'].append({
+            'dt_inicial': result['lista'][i][0],
+            'dt_final': result['lista'][i][1],
+            'termos': t_list[i],
+            })
+            
+    context = {
+        'header': header['header'],
+        'rows': rows['rows'],
+    }
+
+    return render(request, template_name, context)
+
+def nuvem_cronologica(id):
 
     noticias_termo = Noticia.objects.filter(assunto__termo=id) #noticias do termo passado
     latest_dt = noticias_termo.latest('dt').dt                              #latest date
@@ -512,15 +541,25 @@ def quebra_termo(request, id):
     latest_datetime = datetime.combine(latest_dt, datetime.min.time())      #date to datetime
 
     earliest_timestamp = datetime.timestamp(earliest_datetime)      #datetime to timestamp
-    latest_timestamp = datetime.timestamp(latest_datetime)                   #datetime to timestamp
+    latest_timestamp = datetime.timestamp(latest_datetime)          #datetime to timestamp
 
-    periodo = latest_timestamp - earliest_timestamp                         #periodo  
-    tam_slot = periodo/10;                               #cada slot tem 1/10 do tamanho do periodo
+    periodo = latest_timestamp - earliest_timestamp                 #periodo  
+    tam_slot = periodo/10;                                #cada slot tem 1/10 do tamanho do periodo
 
-    l_slots = [] 
+    l_slots = []                                          #lista com a data do inicio e fim de cada slot  
     for i in range(0, 10, 1):
         l_slots.append([date.fromtimestamp(earliest_timestamp+((i)*tam_slot)) , date.fromtimestamp(earliest_timestamp+((i+1)*tam_slot)) - timedelta(days=1)])
 
-    result = {'ID': id, 'lista': l_slots, 'data da primeira noticia': date.fromtimestamp(earliest_timestamp), 'data da ultima noticia': date.fromtimestamp(latest_timestamp)}
+    l_nuvem = []                                          #lista da nuvem de palavras de cada slot
+    for i in range(0, 10, 1):
+        l_nuvem.append(Noticia.objects.pesquisa(datafiltro=l_slots[i]).nuvem())
+
+    l_result = []                        #lista de slots e suas respectivas nuvems(5 palavras mais acessadas)
+    for i in range(0, 10, 1):
+        l_result.append(l_slots[i])
+        for j in range(0, 5, 1):
+            l_result[i].append(l_nuvem[i][j])
+
+    result = {'ID': id, 'lista': l_result, 'data da primeira noticia': date.fromtimestamp(earliest_timestamp), 'data da ultima noticia': date.fromtimestamp(latest_timestamp)}
 
     return JsonResponse(result)
