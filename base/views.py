@@ -504,23 +504,28 @@ def novo_contato(request):
 
 def quebra_termo(request, id):
     template_name = 'nuvem_crono.html'
+    n_slot = 15                             #numero de slots    
 
-    result = nuvem_cronologica(id)  #resultado da nuvem_crono em JsonResponse
-    for el in result:
-        result = json.loads(el.decode("utf-8")) #Transforma o result de JsonResponse->String->Dicionario
+    result = nuvem_cronologica(id, n_slot)  #resultado da nuvem_crono em JsonResponse
 
     header = {'header':['Dt Inicial', 'Dt Final', 'Termos']}
     rows = { 'rows': []}
 
-    t_list = [[],[],[],[],[],[],[],[],[],[]]
-    for i in range(0, 10, 1):
-        for j in range(2, 6, 1):
-
-            t_list[i].append(result['lista'][i][j][0])
+    t_list = []
+    for i in range(0, n_slot, 1):
+        t_list.append([])
+        
+    n_palavras = 10
+    for i in range(0, n_slot, 1):
+        for j in range(2, (n_palavras+2), 1): #10 palavras
+            if (len(result[i]) <= 2): #caso onde a l_result(slot) tem apenas as datas e nao tem noticias
+                j += 1
+            else:
+                t_list[i].append(result[i][j][0])
             
         rows['rows'].append({
-            'dt_inicial': result['lista'][i][0],
-            'dt_final': result['lista'][i][1],
+            'dt_inicial': result[i][0],
+            'dt_final': result[i][1],
             'termos': t_list[i],
             })
             
@@ -531,12 +536,12 @@ def quebra_termo(request, id):
 
     return render(request, template_name, context)
 
-def nuvem_cronologica(id):
+def nuvem_cronologica(id, n_slot):
 
     noticias_termo = Noticia.objects.filter(assunto__termo=id) #noticias do termo passado
     latest_dt = noticias_termo.latest('dt').dt                              #latest date
     earliest_dt = noticias_termo.earliest('dt').dt                          #earliest date
-    
+
     earliest_datetime = datetime.combine(earliest_dt, datetime.min.time())  #date to datetime
     latest_datetime = datetime.combine(latest_dt, datetime.min.time())      #date to datetime
 
@@ -544,22 +549,27 @@ def nuvem_cronologica(id):
     latest_timestamp = datetime.timestamp(latest_datetime)          #datetime to timestamp
 
     periodo = latest_timestamp - earliest_timestamp                 #periodo  
-    tam_slot = periodo/10;                                #cada slot tem 1/10 do tamanho do periodo
+    tam_slot = periodo/(n_slot)                                #cada slot tem tamanho periodo/(n_slot)
 
     l_slots = []                                          #lista com a data do inicio e fim de cada slot  
-    for i in range(0, 10, 1):
+    for i in range(0, n_slot, 1):
         l_slots.append([date.fromtimestamp(earliest_timestamp+((i)*tam_slot)) , date.fromtimestamp(earliest_timestamp+((i+1)*tam_slot)) - timedelta(days=1)])
 
     l_nuvem = []                                          #lista da nuvem de palavras de cada slot
-    for i in range(0, 10, 1):
+    for i in range(0, n_slot, 1):
         l_nuvem.append(Noticia.objects.pesquisa(datafiltro=l_slots[i]).nuvem())
 
-    l_result = []                        #lista de slots e suas respectivas nuvems(5 palavras mais acessadas)
-    for i in range(0, 10, 1):
-        l_result.append(l_slots[i])
-        for j in range(0, 5, 1):
-            l_result[i].append(l_nuvem[i][j])
+    n_palavras = 10
+    l_result = []                        #lista de slots e suas respectivas nuvems(n_palavras mais acessadas)
+    for i in range(0, n_slot, 1):
+        var = l_slots[i]
+        var[0] = datetime.strftime(var[0], '%d/%m/%Y')
+        var[1] = datetime.strftime(var[1], '%d/%m/%Y')
+        l_result.append(var)
+        for j in range(0, n_palavras, 1):
+            if (len(l_nuvem[i]) == 0):      #Caso nao hajam noticias no slot
+                j += 1
+            else:
+                l_result[i].append(l_nuvem[i][j])
 
-    result = {'ID': id, 'lista': l_result, 'data da primeira noticia': date.fromtimestamp(earliest_timestamp), 'data da ultima noticia': date.fromtimestamp(latest_timestamp)}
-
-    return JsonResponse(result)
+    return l_result
