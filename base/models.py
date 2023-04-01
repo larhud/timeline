@@ -11,7 +11,7 @@ from base.managers import NoticiaQueryset, test_url, build_wordcloud, AssuntoMan
 
 
 class Termo(models.Model):
-    termo = models.CharField(max_length=120, unique=True)
+    termo = models.CharField(max_length=120, unique=True, verbose_name='Timeline')
     texto_explicativo = models.TextField(null=True)
     slug = models.CharField(max_length=60, null=True)
     imagem = models.ImageField(upload_to='uploads', null=True, blank=True)
@@ -19,8 +19,8 @@ class Termo(models.Model):
     num_reads = models.BigIntegerField('Núm.Acessos', default=0)
 
     class Meta:
-        verbose_name = 'Termo'
-        verbose_name_plural = 'Termos'
+        verbose_name = 'Timeline'
+        verbose_name_plural = 'Timelines'
 
     def __str__(self):
         return self.termo

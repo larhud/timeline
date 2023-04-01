@@ -16,7 +16,8 @@ class AssuntoInline(InlineModelAdmin):
 
 
 class NoticiaFormAdd(forms.ModelForm):
-    termo = forms.ModelChoiceField(label='Termo', queryset=Termo.objects.all(), required=True, initial=Termo.objects.last().id)
+    termo = forms.ModelChoiceField(label='Timeline', queryset=Termo.objects.all(),
+                                   required=True, initial=Termo.objects.last().id)
     url = forms.URLField(widget=URLInput(attrs={'size': 100}), required=True)
     dt = forms.DateField(widget=NumberInput(attrs={'type': 'date'}))
     fonte = forms.CharField(label='Fonte da Notícia', widget=URLInput(attrs={'size': 60}), required=True)
@@ -70,7 +71,7 @@ class NoticiaAdmin(PowerModelAdmin):
         ('q3', 'ID', ['id_externo']),
         ('q4', 'Veículo', ['fonte']),
     )
-    list_filter = ('url_valida', 'atualizado', 'revisado', 'visivel', 'assunto__termo')
+    list_filter = ('assunto__termo', 'url_valida', 'atualizado', 'revisado', 'visivel', )
     date_hierarchy = 'dt'
     list_display = ('id_externo', 'dt', 'titulo', 'fonte', 'url_valida', 'revisado', 'visivel')
     ordering = ('id_externo',)
@@ -95,6 +96,14 @@ class NoticiaAdmin(PowerModelAdmin):
         else:
             self.form = NoticiaEdit
         return super(NoticiaAdmin, self).get_form(request, obj, **kwargs)
+
+    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+
+        context.update({
+            'show_save_and_continue': False,
+            'show_save_and_add_another': False,
+        })
+        return super().render_change_form(request, context, add, change, form_url, obj)
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == 'texto_completo':
