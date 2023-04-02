@@ -3,7 +3,6 @@ import requests
 from collections import Counter
 from bs4 import BeautifulSoup
 
-from django.db import models
 from cms.models import Recurso
 
 from django.core.validators import EMPTY_VALUES
