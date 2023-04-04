@@ -1,7 +1,7 @@
 from calendar import monthrange
 
-from cms.email import sendmail
-from cms.models import Recurso
+from powercms.cms.email import sendmail
+from powercms.cms.models import Recurso
 from django import forms
 from django.contrib.admin.views.main import ChangeList
 from django.core.validators import EMPTY_VALUES

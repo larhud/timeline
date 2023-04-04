@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load menu_tags cms_tags thumbnail static %}
+
+
+{% block title %}Login - {% endblock %}
+{% block ogtitle %}{% for section in article.get_sections %}{% if not section.slug == 'home' %}{{ section.title }} - {% endif %}{% endfor %}{{ article.title }} - {% endblock %}
+
+{% block description %}{{ article.content|striptags|truncatewords:20|safe }}{% endblock %}
+{% block ogdescription %}{{ article.content|striptags|truncatewords:20|safe }}{% endblock %}
+
+{% block keywords %}
+    {% for section in article.get_sections %}
+        {% if section.keywords %}
+            {{ section.keywords }},
+        {% endif %}
+    {% endfor %}
+    {% if article.keywords %}
+        {{ article.keywords }}
+    {% endif %}
+{% endblock %}
+
+
+{% block content %}
+    <div class="internas">
+            <div class="titulo py-3">
+                <div class="container">
+                    <h2>Logout</h2>
+                </div>
+            </div>
+        </div>
+        <div class="conteudo">
+            <div class="container">
+                <div class="row login py-3">
+                    <div class="col-lg-12 col-md-12">
+                        <h2>Instruções</h2>
+                        <p>Obrigado por usar o nosso site.<br/> Para entrar novamente selecione o botão "Logar"</p>
+                    </div>
+                    <a class="nav-link" href="/login">Logar</a>
+                </div>
+            </div>
+        </div>
+
+{% endblock %}

@@ -1,8 +1,8 @@
 import hashlib
 
-from cms.models import Recurso
-from django.contrib.staticfiles.templatetags.staticfiles import static
+from powercms.cms.models import Recurso
 from django.db import models
+from django.templatetags.static import static
 from django.urls import reverse_lazy
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify

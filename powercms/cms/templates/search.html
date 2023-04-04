@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load menu_tags cms_tags thumbnail static %}
+
+{% block title %}Pesquisando por '{{ q }}' - {% endblock %}
+{% block ogtitle %}Pesquisando por '{{ q }}' - {% endblock %}
+
+{% block description %}Pesquisando por '{{ q }}'{% endblock %}
+{% block ogdescription %}Pesquisando por '{{ q }}'{% endblock %}
+
+{% block keywords %}
+    {{ block.super }}, {{ q }}
+{% endblock %}
+
+{% block content %}
+     <div class="internas">
+      <div class="titulo">
+          <div class="container">
+              <h1>Pesquisando por '{{ q }}'</h1>
+          </div>
+      </div>
+     </div>
+     <div class="conteudo">
+     <div class="container">
+    {% if results %}
+        <div class="list-results center">
+            {% for result in results %}
+                <div class="list-item">
+                    <a href="{{ result.object.get_absolute_url }}">{{ result.title }}</a>
+                    <p>{{ result.subtitle }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        {% if results.has_previous or results.has_next %}
+        <div align="center">
+            <div class="pagination">
+                {% if results.has_previous %}
+                    <a class="previous_page" href="?page={{ results.previous_page_number }}&q={{ request.GET.q }}">← Anterior</a>
+                {% else %}
+                    <span class="disabled previous_page">← Anterior</span>
+                {% endif %}
+
+                <span class="gap">{{ results.number }} de {{ results.paginator.num_pages }}</span>
+
+                {% if results.has_next %}
+                    <a href="?page={{ results.next_page_number }}&q={{ request.GET.q }}" rel="next" class="next_page">Próximo →</a>
+                {% else %}
+                    <span class="disabled next_page">Próximo →</span>
+                {% endif %}
+            </div>
+        </div>
+            </div>
+            </div>
+
+        {% endif %}
+    {% endif %}
+{% endblock %}

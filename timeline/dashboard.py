@@ -13,8 +13,8 @@ And to activate the app index dashboard::
 
 from admin_tools.dashboard import modules
 from admin_tools.utils import get_admin_site_name
-from django.urls import reverse
-from django_powercms.dashboard import CustomIndexDashboard, AppIndexDashboard
+
+from powercms.dashboard import CustomIndexDashboard, AppIndexDashboard
 
 
 class CustomIndexDashboardVepeInfo(CustomIndexDashboard):

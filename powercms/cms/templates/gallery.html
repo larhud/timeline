@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static cms_tags thumbnail %}
+{% block css %}
+  {{ block.super }}
+  <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/1.6.11/css/lightgallery.min.css" />
+{% endblock %}
+
+{% block content %}
+    <div class="internas">
+            <div class="titulo">
+                <div class="container">
+                    <h1>Galeria de Imagens</h1>
+                </div>
+            </div>
+        </div>
+        <div class="conteudo">
+            <div class="container">
+{#              {% get_article 'galeria-bg-imagem' as galeria_bg %}#}
+{#              <div class="sliderSmall d-flex" {% if galeria_bg.og_image %}style="background: url({{ galeria_bg.og_image.url }}) no-repeat center center;"{% endif %}>#}
+{#                <div class="container h-100">#}
+{#                  <div class="row d-flex justify-content-center h-100">#}
+{#                    <div class="col-md-8 align-self-center text-center">#}
+{#                      <h1>Galeria de Imagens</h1>#}
+{#                    </div>#}
+{#                  </div>#}
+{#                </div>#}
+{#              </div>#}
+
+              <div class="container mt-5 conteudo">
+                <div class="row">
+                  <div class="col-12 text-center">
+                    {% for choice in tag_choices %}
+                      <a href="{{ choice.query_string|iriencode }}" class="btn filter-button {% if choice.selected %}destaque{% endif %}"
+                         title="{{ choice.display }}">{{ choice.display }}</a>
+                    {% endfor %}
+                  </div>
+                </div>
+                <div class="row no-gutters" id="lightgallery">
+                  {% for image in image_list %}
+                      <a class="col-lg-3 col-md-3 col-sm-4 col-6 p-1" href="{{ image.image.url }}" data-lightbox="lightbox">
+                        {% thumbnail image.image "270x180" crop="center" as im %}
+                          <img src="{{ im.url }}" class="img-fluid" title="{{ image.title|default_if_none:'' }}">
+                        {% endthumbnail %}
+                      </a>
+                  {% endfor %}
+                </div>
+                <div id="pagination-container" class="mt-3">
+                  <nav aria-label="Gallery Pages">
+                    <ul class="pagination justify-content-center">
+                      {% if page_obj.has_previous %}
+                        <li class="page-item">
+                          <a class="page-link" href="{% page_parameters page_obj.previous_page_number %}">&lsaquo;&lsaquo;</a>
+                        </li>
+                      {% else %}
+                        <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1" aria-disabled="true">&lsaquo;&lsaquo;</a></li>
+                      {% endif %}
+
+                      <li class="page-item disabled">
+                        <a class="page-link" href="#">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</a>
+                      </li>
+
+                      {% if page_obj.has_next %}
+                        <li class="page-item">
+                          <a class="page-link" href="{%  page_parameters page_obj.next_page_number %}">&rsaquo;&rsaquo;</a>
+                        </li>
+                      {% else %}
+                        <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1" aria-disabled="true">&rsaquo;&rsaquo;</a></li>
+                      {% endif %}
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+            </div>
+            </div>
+        </div>
+
+{% endblock %}
+
+{% block js %}
+  {{ block.super }}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/1.6.11/js/lightgallery.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      $('#lightgallery').lightGallery();
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_modify %}
+
+{% block breadcrumbs %}{% if not is_popup %}
+<div class="breadcrumbs">
+     <a href="../../../">{% trans "Home" %}</a> &rsaquo;
+     {{ title }}
+</div>
+{% endif %}{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <form {% if form.is_multipart %}enctype="multipart/form-data" {% endif %}action="" method="post">{% csrf_token %}
+        <div>
+            {% if form.errors %}
+                <p class="errornote">
+                {% blocktrans count form.errors|length as counter %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktrans %}
+                </p>
+            {% endif %}
+
+            <fieldset class="module aligned">
+                {% for field in form %}
+                <div class="form-row{% if field.errors %} errors{% endif %}">
+                    {{ field.errors }}
+                    <label {% if field.required %}class="required"{% endif %}>{{ field.label }}:</label>{{ field }}
+                    {% if field.help_text %}
+                        <p class="help">{{ field.help_text|safe }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </fieldset>
+
+            <div class="submit-row">
+                <input type="submit" value="Atualizar" class="default" name="_save"/>
+            </div>
+
+        </div>
+    </form>
+</div>
+{% endblock %}

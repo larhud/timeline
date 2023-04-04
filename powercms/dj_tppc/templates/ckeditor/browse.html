@@ -1,0 +1,49 @@
+<html>{% load static %}
+	<head>
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+		<title>CKEDitor | Selecione uma imagem para incorporar</title>
+		<link rel="stylesheet" href="{% static 'admin/css/base.css' %}" type="text/css" />
+    <link href="{% static 'ckeditor/cute/css/styles.css' %}" rel="stylesheet"/>
+		<!-- We only want the thunbnails to display when javascript is disabled -->
+		<script type="text/javascript">
+			document.write('<style>.noscript { display: none; }</style>');
+		</script>
+	</head>
+	<body>
+        <div class="filemanager">
+    		<h2>Procure a imagem que você deseja, e clique nela para continuar ...</h2>
+
+            <div class="breadcrumbs"></div>
+
+            <ul class="data"></ul>
+
+            <div class="nothingfound">
+                <div class="nofiles"></div>
+                <span>Nenhuma imagem encontrada. Envie imagens usando a aba de 'Upload'.</span>
+            </div>
+
+        </div>
+
+        <script src="{% static 'ckeditor/jquery-1.11.0.min.js' %}"></script>
+        <script type="text/javascript">
+            var url = "{% url 'ckeditor_browse' %}?type=json";
+        </script>
+        <script src="{% static 'ckeditor/cute/js/script.js' %}"></script>
+		<script type="text/javascript">
+            function getUrlParam(paramName) {
+                var reParam = new RegExp('(?:[\?&]|&amp;)' + paramName + '=([^&]+)', 'i') ;
+                var match = window.location.search.match(reParam) ;
+
+                return (match && match.length > 1) ? match[1] : '' ;
+            }
+            // embedder
+            $('.filemanager').on('click', '.embed', function() {
+                var funcNum = getUrlParam('CKEditorFuncNum');
+                var fileUrl = $(this).attr('href');
+                window.opener.CKEDITOR.tools.callFunction(funcNum, fileUrl);
+                window.close();
+                return false;
+            });
+		</script>
+	</body>
+</html>

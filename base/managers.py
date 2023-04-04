@@ -1,14 +1,13 @@
 import ast
-import requests
 from collections import Counter
+
+import requests
 from bs4 import BeautifulSoup
-
-from django.db import models
-from cms.models import Recurso
-
 from django.core.validators import EMPTY_VALUES
 from django.db import models
 from django.db.models import Count
+
+from powercms.cms.models import Recurso
 
 
 def test_url(url):

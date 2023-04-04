@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
-from django_powercms.settings.settings import *
+from powercms.settings.settings import *
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # powercms
@@ -30,7 +30,7 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-INSTALLED_APPS.insert(0, 'django_powercms')
+INSTALLED_APPS.insert(0, 'powercms')
 
 INSTALLED_APPS += [
     'base'
@@ -136,6 +136,7 @@ USE_TZ = False
 DATE_INPUT_FORMATS = '%d/%m/%Y'
 DATE_TIME_INPUT_FORMATS = '%d/%m/%Y %H:%m'
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 def noticia_imagem_path():
     base_dir = os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]

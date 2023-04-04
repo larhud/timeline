@@ -18,5 +18,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('', include('base.urls')),
-    path('', include('django_powercms.urls')),
+    path('', include('powercms.urls')),
 ]

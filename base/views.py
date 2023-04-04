@@ -23,7 +23,7 @@ from base import save_image
 from base.forms import FormImportacaoCSV, IntervaloNoticias, BuscaArquivoPT, FormBuscaTimeLine, ContatoForm
 from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
 from base.management.commands.get_text import extract_text, load_html
-from django_powercms.crm.models import Contato
+from powercms.crm.models import Contato
 from timeline.settings import noticia_imagem_path
 
 
