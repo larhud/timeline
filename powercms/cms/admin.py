@@ -445,10 +445,10 @@ class ArticleAdmin(PowerModelAdmin):
     def get_urls(self):
         urls = super(ArticleAdmin, self).get_urls()
         return [
-                   url(r'^add-power/$', self.wrap(self.add_power_view), name='cms_article_add_power'),
-                   url(r'^clone/(?P<id>\d+)/$', self.wrap(self.clone), name='cms_article_clone'),
-                   url(r'^power/(.+)/$', self.wrap(self.change_power_view), name='cms_article_change_power'),
-               ] + urls
+            url(r'^add-power/$', self.wrap(self.add_power_view), name='cms_article_add_power'),
+            url(r'^clone/(?P<id>\d+)/$', self.wrap(self.clone), name='cms_article_clone'),
+            url(r'^power/(.+)/$', self.wrap(self.change_power_view), name='cms_article_change_power'),
+        ] + urls
 
     def get_buttons(self, request, object_id):
         buttons = super(ArticleAdmin, self).get_buttons(request, object_id)
@@ -512,8 +512,8 @@ class ArticleAdmin(PowerModelAdmin):
 
         serializers = CustomSerializer()
         artigos = serializers.serialize(queryset, indent=4, use_natural_foreign_keys=True, fields=(
-        'title', 'slug', 'header', 'content', 'articles', 'author', 'keywords', 'is_active', 'og_title', 'og_image',
-        'sections', ''))
+            'title', 'slug', 'header', 'content', 'articles', 'author', 'keywords', 'is_active', 'og_title', 'og_image',
+            'sections', ''))
 
         # include article
         info = zipfile.ZipInfo()
@@ -759,10 +759,10 @@ class ThemeAdmin(PowerModelAdmin):
     def get_urls(self):
         urls = super(ThemeAdmin, self).get_urls()
         return [
-                   url(r'^backup/(?P<object_id>\d+)/$', self.wrap(self.backup), name='cms_theme_backup'),
-                   url(r'^collect_static/(?P<object_id>\d+)/$', self.wrap(self.collect_static),
-                       name='cms_theme_collect_static'),
-               ] + urls
+            url(r'^backup/(?P<object_id>\d+)/$', self.wrap(self.backup), name='cms_theme_backup'),
+            url(r'^collect_static/(?P<object_id>\d+)/$', self.wrap(self.collect_static),
+                name='cms_theme_collect_static'),
+        ] + urls
 
     def get_buttons(self, request, object_id):
         buttons = super(ThemeAdmin, self).get_buttons(request, object_id)
@@ -852,9 +852,9 @@ class LogEntryAdmin(PowerModelAdmin):
     )
     list_display = ('action_time', 'content_type', 'tipo', 'object_repr', 'user')
     fields = (
-    'action_time', 'user', 'content_type', 'object_id', 'object_repr', 'action_flag', 'tipo', 'change_message')
+        'action_time', 'user', 'content_type', 'object_id', 'object_repr', 'action_flag', 'tipo', 'change_message')
     readonly_fields = (
-    'action_time', 'user', 'content_type', 'object_id', 'object_repr', 'action_flag', 'tipo', 'change_message')
+        'action_time', 'user', 'content_type', 'object_id', 'object_repr', 'action_flag', 'tipo', 'change_message')
     list_per_page = 20
 
     def tipo(self, obj):
