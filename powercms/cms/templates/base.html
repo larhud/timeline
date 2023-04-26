@@ -1,0 +1,21 @@
+{% load menu_tags cms_tags static admin_urls bootstrap %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+
+</head>
+<body class="d-flex flex-column h-100">
+    {% show_menu %}
+    {% get_section_articles 'slideshow' as slide %}
+    <main role="main">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="rodape mt-5">
+
+    </footer>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    {% block js %}{% endblock %}
+</body>
+</html>

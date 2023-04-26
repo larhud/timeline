@@ -22,17 +22,19 @@ class Command(BaseCommand):
         if id:
             queryset = Noticia.objects.filter(id=id)
         else:
-            queryset = Noticia.objects.all()
+            queryset = Noticia.objects.filter(url_valida=False)
 
         for noticia in queryset:
             try:
+
+                # Testa se a URL está duplicada
                 real_hash = hashlib.sha256(noticia.url.encode('utf-8')).hexdigest()
                 if real_hash != noticia.url_hash:
                     dset = Noticia.objects.filter(url_hash=real_hash).exclude(id=noticia.id)
                     if dset.count() != 0:
                         print(f'URL Duplicada {noticia.id_externo} {noticia.url}')
 
-                '''
+                # Testa se a URL existe
                 response = requests.head(noticia.url, timeout=5)
                 if response.status_code != 200:
                     if response.history:
@@ -44,6 +46,6 @@ class Command(BaseCommand):
                     else:
                         if noticia.url_valida:
                             print(f'URL não validada com ID: {noticia.id}')
-                '''
+
             except Exception as e:
                 print(e.__str__())

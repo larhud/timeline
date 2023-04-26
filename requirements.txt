@@ -1,10 +1,8 @@
 Django<4
 mysqlclient
 gunicorn
+-r powercms/requirements.txt
 lxml
-requests
 serializers
 selenium
-beautifulsoup4
-django-powercms @ git+https://bitbucket.org/josir/powercms.git@dev3
 git+https://github.com/LIAAD/TemporalSummarizationFramework.git

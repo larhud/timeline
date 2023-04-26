@@ -1,0 +1,22 @@
+<html>
+    <body>
+        <table cellspacing="0" cellpadding="5" border="0" width="580" style="margin:0 auto;font-family:arial;border-bottom:1px dotted #ccc">
+            <tr style="background:#2C3E50">
+                <td style="font-size:12px;color:#fff;padding:3px 5px">Contato</td>
+                <td style="text-align:right;color:#fff;font-size:12px;padding:3px">{% now "d \d\e F \d\e Y" %}</td>
+            </tr>
+            <tr style="background:#EFEFEF">
+                <td style="font-weight:bold;font-size:20px;min-height:26px;padding-left:5px" colspan="2">
+                    {{ title }}
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <b>Nome:</b>{{ nome }}<br>
+                    <b>e-mail:</b> {{ email }}<br>
+                    <b>Mensagem:</b> {{ mensagem }}<br>
+                </td>
+            </tr>
+            </table>
+        </body>
+</html>

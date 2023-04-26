@@ -47,10 +47,9 @@ class Command(BaseCommand):
                     noticia.imagem = '/media/' + termos[0].termo.imagem.path.split('/media/')[-1]
                 else:
                     noticia.imagem = '/static/site/img/logo.png'
-                if noticia.notas:
-                    noticia.notas += '[Imagem não recuperada]'
-                else:
-                    noticia.notas = '[Imagem não recuperada]'
+                if not noticia.notas:
+                    noticia.notas = ''
+                noticia.notas += '[Imagem não recuperada]'
                 noticia.save()
                 print(f'Imagem ({noticia.id} não carregada: {noticia.media}')
 

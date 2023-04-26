@@ -17,7 +17,6 @@ def extract_scripts_and_styles(html):
 # obtem o HTML retirado da URL e retorna um soup object
 # se use_cache=False, a rotina irá buscar da URL original mesmo que já exista um cache
 def load_html(url, file_id, use_cache=False):
-
     html_path = os.path.join(settings.MEDIA_ROOT, 'html')
     if use_cache:
         filename = f"{html_path}/{file_id}.html"
@@ -30,7 +29,7 @@ def load_html(url, file_id, use_cache=False):
 
     try:
         headers = {'user-agent':
-                   'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+                       'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
         response = requests.get(url, headers=headers, timeout=10)
         if response.status_code == 200:
             soup = extract_scripts_and_styles(response.content)
@@ -48,18 +47,18 @@ def load_html(url, file_id, use_cache=False):
 # A tipo da imagem é "calculado" e incluído ao path
 def save_image(url, full_path, id_noticia):
     server_filename = url.split('/')[-1]
-    file_ext = server_filename.split('.')[ -1 ].split('?')[ 0 ]
+    file_ext = server_filename.split('.')[-1].split('?')[0]
     if len(file_ext) > 4 or len(file_ext) == 0 or file_ext == 'img':
         file_ext = 'jpeg'
     full_path += '/%d.%s' % (id_noticia, file_ext)
     try:
         headers = {'user-agent':
-                   'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+                       'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
         response = requests.get(url, headers=headers, timeout=10)
         if response.status_code == 200:
             with open(full_path, 'wb') as file:
                 file.write(response.content)
-            relative_path = '/media/img/'+full_path.split('/')[-1]
+            relative_path = '/media/img/' + full_path.split('/')[-1]
         else:
             relative_path = None
     except Exception as e:
@@ -87,8 +86,8 @@ def scrap_best_image(soup):
                 break
 
     if not imagem:
-        for line in soup.find_all("div", {"class": [ "noticia", "entry-body",
-                                                     "content-text", "content-noticia", "post-item-wrap" ]}):
+        for line in soup.find_all("div", {"class": ["noticia", "entry-body",
+                                                    "content-text", "content-noticia", "post-item-wrap"]}):
             link = line.find('img')
             if link:
                 imagem = link['src']

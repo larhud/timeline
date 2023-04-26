@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load menu_tags cms_tags thumbnail static %}
+
+
+{% block title %}{{ section.title }} - {% endblock %}
+{% block ogtitle %}{{ section.title }} - {% endblock %}
+
+{% block description %}{{ section.header|striptags|truncatewords:20|safe }}{% endblock %}
+{% block ogdescription %}{{ section.header|striptags|truncatewords:20|safe }}{% endblock %}
+
+{% block keywords %}
+    {{ section.keywords }}
+{% endblock %}
+
+{% block content %}
+    {% get_section_articles section.slug as articles %}
+    <div class="internas">
+            <div class="titulo">
+                <div class="container">
+                    <h1>{{section.title}}</h1>
+                </div>
+            </div>
+        </div>
+        <div class="conteudo">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12 col-md-9">
+                        <div class="aulas">
+                        {% for article in articles %}
+                            <div class="aula">
+                                <h2>{{article.title}}</h2>
+                                <div class="d-flex">
+                                    <div class="imagem mr-3">
+                                        <img src="{{ article.first_image }}" alt="">
+                                    </div>
+                                    <div>
+                                        <p>{{ article.header|safe }}</p>
+                                        <a href="{{ article.get_absolute_url }}" class="btn">Ver mais</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends 'admin/base_site.html' %}
+{% load static %}
+
+{% block nav-global %}{% endblock %}
+{% block extrastyle %}
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css'%}">
+    <script src="{% static 'js/jquery-3.1.1.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <style>
+        .table{
+            margin-top: 10px;
+        }
+        #header #branding h1 {
+            margin: 0 !important;
+            padding: 5px 10px!important;
+            text-indent: 0!important;
+            background: none!important;
+            height: 31px!important;
+            width: auto!important;
+            color: #fff!important;
+            font-weight: bold!important;
+        }
+
+    </style>
+
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h2>Importação de Artigos</h2>
+        {# 1. BUTTON TO TRIGGER THE ACTION #}
+        <button type="button" class="btn btn-primary js-upload-photos">
+          <span class="glyphicon glyphicon-cloud-upload"></span> Enviar Arquivo
+        </button>
+
+        {# 2. FILE INPUT TO BE USED BY THE PLUG-IN #}
+
+            <input id="fileupload" type="file" name="file" multiple
+               style="display: none;"
+               data-url="{% url 'importar_artigo' %}"
+               data-form-data='{"csrfmiddlewaretoken": "{{ csrf_token }}"}'>
+
+                {# 3. TABLE TO DISPLAY THE UPLOADED PHOTOS #}
+                <div class="row">
+                    <div class="col-md-12 col-sm-12">
+                        <table id="gallery" class="table table-bordered">
+                          <thead>
+                            <tr>
+                              <th>Nome</th>
+                              <th>Ver</th>
+                              <th>Tipo</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row" id="obs" style="display: none">
+                    <p>Observações: As imagens que tiverem <span class="glyphicon glyphicon-remove"></span> não foram importadas pois elas já existem na pasta</p>
+                </div>
+
+
+        <div class="modal fade" id="modal-progress" data-backdrop="static" data-keyboard="false">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title">Carregando...</h4>
+              </div>
+              <div class="modal-body">
+                <div class="progress">
+                  <div class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+    </div>
+    <script src="{% static 'js/jquery-file-upload/vendor/jquery.ui.widget.js' %}"></script>
+    <script src="{% static 'js/jquery-file-upload/jquery.iframe-transport.js' %}"></script>
+    <script src="{% static 'js/jquery-file-upload/jquery.fileupload.js' %}"></script>
+
+    <script>
+       $(".js-upload-photos").click(function () {
+        $("#fileupload").click();
+      });
+
+      $("#fileupload").fileupload({
+        dataType: 'json',
+        sequentialUploads: true,  /* 1. SEND THE FILES ONE BY ONE */
+        start: function (e) {  /* 2. WHEN THE UPLOADING PROCESS STARTS, SHOW THE MODAL */
+          $("#modal-progress").modal("show");
+        },
+        stop: function (e) {  /* 3. WHEN THE UPLOADING PROCESS FINALIZE, HIDE THE MODAL */
+          $("#modal-progress").modal("hide");
+        },
+        progressall: function (e, data) {  /* 4. UPDATE THE PROGRESS BAR */
+          var progress = parseInt(data.loaded / data.total * 100, 10);
+          var strProgress = progress + "%";
+          $(".progress-bar").css({"width": strProgress});
+          $(".progress-bar").text(strProgress);
+        },
+        done: function (e, data) {
+          $('.alert').remove();
+          console.log(data.result)
+          if (data.result.is_valid) {
+            data.result.logs.forEach(r => $("#gallery tbody").prepend(
+                  "<tr>" +
+                    "<td>"+r.file +"</td>" +
+                    "<td><a target='_blank' href='" + data.result.host + r.c+ "'>" + r.c + "</a></td>" +
+                    "<td>"+ r.type +"</td>" +
+                    "<td class='text-center'><span class='"+ r.add +" '></span></td>" +
+                  "</tr>"
+                ))
+            $('#obs').show();
+            $(`<div class="alert alert-${data.result.msg.type}">${data.result.msg.text}</div>`).insertAfter('.breadcrumbs')
+          }
+          else{
+              $(`<div class="alert alert-${data.result.msg.type}">${data.result.msg.text}</div>`).insertAfter('.breadcrumbs')
+          }
+        }
+
+      });
+    </script>
+
+{% endblock %}

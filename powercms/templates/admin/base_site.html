@@ -1,0 +1,91 @@
+{% extends "admin/base.html" %}
+{% load i18n admin_tools_menu_tags cms_tags static %}
+
+{% block extrahead %}
+<script>window.CKEDITOR_BASEPATH = '/static/ckeditor/ckeditor/';</script>
+{{ block.super }}
+{% endblock %}
+
+{% block title %}{% trans 'PowerCMS' %} {% site_name %} | {{ title }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+{% if user.is_active and user.is_staff %}
+{% if not is_popup %}
+{% admin_tools_render_menu_css %}
+{% endif %}
+{% endif %}
+<!--[if IE 6]>
+<![endif]-->
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style type="text/css">
+    #header #branding h1 {
+     margin: 0;
+     padding: 5px 10px;
+     text-indent: 0!important;
+     background: none!important;
+     height: 31px;
+     width: auto!important;
+}
+    #header ul#navigation-menu li.first a{
+        padding: 16px;
+    }
+    #branding h1, #branding h1 a:link, #branding h1 a:visited {
+        color: #fff;
+        font-weight: bold;
+    }
+    /* Escode as tags p que estao sobre a linha do inline */
+    td.original p{
+        display: none;
+    }
+    @media (max-width: 767px) {
+        #container {
+            min-width: 100%;
+        }
+        textarea, #cke_id_header {
+            width: 25em !important;
+        }
+        .dashboard-column {
+            width: 100% !important;
+        }
+        #result_list thead th, #result_list tbody td {display: none;}
+        #result_list thead th:nth-child(1), #result_list thead th:nth-child(2), #result_list tbody td:nth-child(1) { display: table-cell; }
+
+        #header ul#navigation-menu li {
+            width: 100% !important;
+            min-height: 35px !important;
+        }
+        #header ul#navigation-menu li ul{
+            width: 100% !important;
+            height: 100% !important;
+            position: relative !important;
+        }
+
+        .aligned label {
+            float: none !important;
+        }
+        form .aligned p {
+            padding-left: 0px !important;
+            margin-left: 0px !important;
+        }
+        .inline-group input[type=text], .inline-group input[type=password], .inline-group textarea, .inline-group select, .inline-group .vTextField {
+              width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">{% site_name %}</h1>
+{% endblock %}
+
+{% block nav-global %}
+{% if user.is_active and user.is_staff %}
+{% if not is_popup %}
+{% admin_tools_render_menu %}
+{% endif %}
+{% endif %}
+{% endblock %}
+
