@@ -59,7 +59,7 @@ def backup(connection, base):
 
 @task
 def backup_producao(context):
-    backup(Connection('200.130.45.80', user='webapp', port=8090), base='timeline')
+    backup(Connection('200.130.45.80', user='webapp', port=8090), base='timeline2')
 
 @task
 def backup_teste(context):

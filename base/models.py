@@ -16,6 +16,7 @@ class Termo(models.Model):
     slug = models.CharField(max_length=60, null=True)
     imagem = models.ImageField(upload_to='uploads', null=True, blank=True)
     visivel = models.BooleanField('Visível', default=True)
+
     num_reads = models.BigIntegerField('Núm.Acessos', default=0)
 
     class Meta:
@@ -27,13 +28,16 @@ class Termo(models.Model):
 
     def tot_noticias(self):
         return self.assunto_set.count() or 0
+    tot_noticias.short_description = "Total de Notícias"
+
+    def tot_invalidas(self):
+        return self.assunto_set.filter(noticia__url_valida=False).count() or 0
+    tot_invalidas.short_description = "URLs inválidas"
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.termo)[:60]
         super(Termo, self).save(*args, **kwargs)
-
-    tot_noticias.short_description = "Total de Notícias"
 
     def get_absolute_url(self):
         return reverse_lazy('timeline_por_termo', kwargs={'slug': self.slug})
@@ -121,7 +125,7 @@ class Noticia(models.Model):
 
     def pdf_file(self):
         if self.pdf_atualizado:
-            return mark_safe(f'<a href="/media/pdf/{self.id}.pdf" target="_blank">Baixar Arquivo</a>')
+            return mark_safe(f'<a href="/media/pdf/{self.id}.pdf" target="_blank">Baixar PDF</a>')
         else:
             return ''
 
@@ -177,7 +181,7 @@ class Noticia(models.Model):
 
 class Assunto(models.Model):
     noticia = models.ForeignKey(Noticia, on_delete=models.CASCADE)
-    termo = models.ForeignKey(Termo, on_delete=models.CASCADE)
+    termo = models.ForeignKey(Termo, on_delete=models.CASCADE, verbose_name='Timeline')
     id_externo = models.IntegerField(null=True, blank=True)
 
     objects = AssuntoManager()

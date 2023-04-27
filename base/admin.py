@@ -163,8 +163,8 @@ class NoticiaAdmin(PowerModelAdmin):
 
 class TermoAdmin(PowerModelAdmin):
     search_fields = ('termo',)
-    list_display = ('termo', 'slug', 'tot_noticias',)
-    readonly_fields = ('tot_noticias',)
+    list_display = ('termo', 'slug', 'tot_noticias', 'tot_invalidas')
+    readonly_fields = ('tot_noticias', 'tot_invalidas')
 
 
 admin.site.register(Termo, TermoAdmin)

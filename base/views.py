@@ -321,7 +321,8 @@ def scrap_text(request, id):
         if tag and not noticia.texto:
             noticia.texto = tag['content']
 
-        noticia.texto_completo = extract_text(soup)
+        if not noticia.revisado:
+            noticia.texto_completo = extract_text(soup)
         noticia.save()
     else:
         messages.info(request, 'Não foi possível carregar a URL. Realize a carga manual')
