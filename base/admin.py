@@ -64,6 +64,19 @@ class NoticiaEdit(forms.ModelForm):
         fields = "__all__"
 
 
+class ImagemListFilter(admin.SimpleListFilter):
+    title = 'Imagem Válida'
+    parameter_name = 'media__isnull'
+
+    def lookups(self, request, model_admin):
+        """0 = Imagem válida (media__isnull=False) / 1 = Imagem inválida (media__isnull=True)"""
+        return ((0, 'Sim'), (1, 'Não'))
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            return queryset.filter(**{self.parameter_name: int(self.value())})
+
+
 class NoticiaAdmin(PowerModelAdmin):
     multi_search = (
         ('q1', 'Texto', ['titulo', 'texto']),
@@ -71,7 +84,7 @@ class NoticiaAdmin(PowerModelAdmin):
         ('q3', 'ID', ['id_externo']),
         ('q4', 'Veículo', ['fonte']),
     )
-    list_filter = ('assunto__termo', 'url_valida', 'atualizado', 'revisado', 'visivel', )
+    list_filter = ('assunto__termo', 'url_valida', 'atualizado', 'revisado', 'visivel', ImagemListFilter)
     date_hierarchy = 'dt'
     list_display = ('id_externo', 'dt', 'titulo', 'fonte', 'url_valida', 'revisado', 'visivel')
     ordering = ('id_externo',)
