@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from django.core.validators import EMPTY_VALUES
 from django.db import models
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from powercms.cms.models import Recurso
 
@@ -161,5 +161,10 @@ class AssuntoManager(models.Manager):
         return super().get_queryset().select_related('termo')
 
     def fontes(self, termo):
-        return self.filter(termo__pk=termo, noticia__visivel=True).exclude(noticia__fonte='').\
-            values('noticia__fonte').annotate(Count('noticia__fonte')).order_by('noticia__fonte')
+        return self.objects.filter(termo__pk=termo, noticia__visivel=True).values('noticia__fonte').annotate(
+            validos=Count('noticia__url_valida', filter=Q(noticia__url_valida=True)),
+
+            total=Count('noticia__id'))
+
+        # return self.filter(termo__pk=termo, noticia__visivel=True).exclude(noticia__fonte='').\
+        #    values('noticia__fonte').annotate(Count('noticia__fonte')).order_by('noticia__fonte')

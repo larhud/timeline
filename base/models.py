@@ -65,7 +65,7 @@ class Noticia(models.Model):
     url = models.URLField(max_length=URL_MAX_LENGTH)
     url_hash = models.CharField(max_length=64, unique=True)
     url_valida = models.BooleanField('URL Válida', default=False,
-                                     help_text='Indica que a URL estava válida. '
+                                     help_text='Indica que a URL foi validada. '
                                                'Para revalidá-la, clique no botão Capturar Texto')
     atualizado = models.BooleanField('Texto atualizado', default=False,   # se o texto_completo foi atualizado
                                      help_text='Indica que o texto da notícia foi capturado')

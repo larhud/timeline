@@ -42,7 +42,7 @@ class Command(BaseCommand):
             logging.info(f'Processando ID {id}')
         else:
             logging.info(f'Validando notícias')
-            queryset = Noticia.objects.filter(id__lte=200, url_valida=True, revisado=False).order_by('pk')
+            queryset = Noticia.objects.filter(id__gt=200, url_valida=True, revisado=False).order_by('pk')
 
         set_autocommit(False)
 
@@ -67,9 +67,10 @@ class Command(BaseCommand):
 
             # Testa se a URL existe
             try:
-                response = requests.head(noticia.url, headers=headers, timeout=timeout)
-                if response.status_code == 403:
-                    response = requests.get(noticia.url, headers=headers, timeout=timeout)
+                url_final = noticia.url
+                response = requests.head(url_final, headers=headers, timeout=timeout)
+                if response.status_code in (301, 403):
+                    response = requests.get(url_final, headers=headers, timeout=30)
                 link_ok = response.status_code == 200
             except Exception as e:
                 logging.error(f'Noticia {noticia.id}')
@@ -77,19 +78,10 @@ class Command(BaseCommand):
                 link_ok = False
                 response = None
 
-            # mesmo com o link ok, deve-se verificar se não houve redirecionamento para outra URL
-            if link_ok:
-                if response.history and response.history[0].status_code in [300,301,302]:
-                    logging.info(f"Request was redirected: {noticia.id}")
-                    link_ok = False
-
-            # se o status for Moved Permanent, tentar obter a nova URL
-            # muitas vezes o redirect é para a home do site.
-            # if response.status_code == 301:
-            #    nova_url = response.next.url
-            #    response = requests.head(nova_url, timeout=5)
-            #    if response.status_code == 200:
-            #        noticia.url = nova_url
+            #  mesmo com o link ok, deve-se verificar se não houve redirecionamento para outra URL
+            # if link_ok and response.history and response.history[0].status_code in [300,301,302]:
+            #    logging.info(f"Request was redirected: {noticia.id}")
+            #    link_ok = False
 
             # conferir se o flag do PDF está ok
             if not noticia.pdf_atualizado:

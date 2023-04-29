@@ -486,7 +486,7 @@ RECURSOS = (
     (u'COMMENT_P', u'Texto para comentários privados'),
     (u'COMMENT', u'Texto para comentários'),
     (u'SIGNUP', u'Permite cadastro de usuários'),
-    (u'EMAILADMIN', u'Quem recebe avisos de novos usuários'),
+    (u'EMAILADMIN', u'Email do Administrador'),
     (u'CAPTCHA_PU', u'RECAPTCHA_PUBLIC_KEY'),
     (u'CAPTCHA_PR', u'RECAPTCHA_PRIVATE_KEY'),
     (u'OG-IMAGE', u'og-imagem'),
