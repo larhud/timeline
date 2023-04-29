@@ -354,7 +354,7 @@ class ArticleAdmin(PowerModelAdmin):
         model = self.model
         opts = model._meta
 
-        obj = self.get_object(request, unquote(object_id))
+        obj = self.get_object(request, object_id)
 
         if not self.has_change_permission(request, obj):
             raise PermissionDenied
@@ -811,8 +811,8 @@ admin.site.unregister(User)
 
 
 class UserAdminCustom(UserAdmin, PowerModelAdmin):
-    change_list_template = 'admin/change_list_multi_search.html'
-    change_form_template = 'admin/edit_form.html'
+    # change_list_template = 'admin/change_list_multi_search.html'
+    # change_form_template = 'admin/edit_form.html'
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_active', 'is_staff')
     list_filter = ('is_active', 'is_staff', 'groups',)
     readonly_fields = ('last_login', 'date_joined',)

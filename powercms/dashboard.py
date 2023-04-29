@@ -46,9 +46,8 @@ class CustomIndexDashboard(Dashboard):
             ),
             modules.ModelList(
                 _(u'Administração'),
-                models=('django.contrib.*', 'utils.models.*', 'cms.models.EmailAgendado', 'cms.models.Backup',),
+                models=('django.contrib.*', 'powercms.cms.models.EmailAgendado', ),
                 exclude=('django.contrib.sites.models.*', ),
-
             ),
             modules.ModelList(
                 _(u'Galeria de Imagens'),

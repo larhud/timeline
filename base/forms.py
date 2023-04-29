@@ -148,7 +148,7 @@ class ContatoForm(forms.Form):
 
     def sendemail(self):
         recurso = Recurso.objects.get_or_create(recurso='EMAILADMIN')[0]
-        to = recurso.valor.split(',') if recurso.valor else []
+        to = recurso.valor.split(',') if recurso.valor else ['josircg@gmail.com']
         Contato.objects.get_or_create(nome=self.cleaned_data.get('nome'),
                                       email=self.cleaned_data.get('nome'))
         sendmail('Formulário de Contato', to, params=self.cleaned_data, template='inclusao_email.html')

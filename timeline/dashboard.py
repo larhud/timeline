@@ -35,11 +35,6 @@ class CustomIndexDashboardVepeInfo(CustomIndexDashboard):
                 u'Base de Notícias',
                 models=('base.models.*',),
             ),
-            modules.ModelList(
-                u'Administração',
-                models=('django.contrib.*', ),
-            ),
-
         ]
 
 
