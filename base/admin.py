@@ -89,7 +89,7 @@ class NoticiaAdmin(PowerModelAdmin):
     list_display = ('id_externo', 'dt', 'titulo', 'fonte', 'url_valida', 'revisado', 'visivel')
     ordering = ('id_externo',)
     fields = (('dt', 'id_externo'), 'titulo', 'url', 'texto',
-              ('fonte', 'url_valida', 'atualizado', 'revisado', 'coletanea', 'visivel'),
+              ('fonte', 'url_valida', 'atualizado'), ('coletanea', 'revisado', 'visivel'),
               'media', 'texto_completo', 'nuvem', 'texto_busca', 'imagem_link', 'extra_field', 'pdf_file', 'notas')
     readonly_fields = ('pdf_file', 'imagem_link')
 
@@ -115,13 +115,13 @@ class NoticiaAdmin(PowerModelAdmin):
         if add:
             context.update({
                 'show_save': False,
-                'show_save_and_continue': self.has_add_permission(request),
+                'show_save_and_continue': True,
                 'title': f'{self.model._meta.verbose_name} - Etapa 1'
             })
         else:
-            context['show_save_and_continue'] = False
+            context['show_save_and_continue'] = self.has_add_permission(request),
 
-        context['show_save_and_add_another'] = False
+        context['show_save_and_add_another'] = True
 
         return super().render_change_form(request, context, add, change, form_url, obj)
 

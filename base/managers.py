@@ -14,10 +14,10 @@ def test_url(url):
     try:
         r = requests.get(url)
         if r.status_code == 200:
-            soup = BeautifulSoup(r.content, features="html.parser")
-            if soup.title:
-                title = soup.title.string
-            return True
+            if len(r.history) > 0 and r.history[0].status_code == 301:
+                return False
+            else:
+                return True
     except Exception as e:
         None
     return False

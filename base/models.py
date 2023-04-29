@@ -64,11 +64,18 @@ class Noticia(models.Model):
     dt = models.DateField(db_index=True)
     url = models.URLField(max_length=URL_MAX_LENGTH)
     url_hash = models.CharField(max_length=64, unique=True)
-    url_valida = models.BooleanField('URL Válida', default=False)
-    atualizado = models.BooleanField('Texto atualizado', default=False)  # se o texto_completo foi atualizado
-    revisado = models.BooleanField('Texto revisado', default=False)  # se o texto completo foi revisado por um editor
-    pdf_atualizado = models.BooleanField('PDF gerado', default=False)  # se o PDF foi obtido com sucesso
-    coletanea = models.BooleanField('Coletânea', default=False)
+    url_valida = models.BooleanField('URL Válida', default=False,
+                                     help_text='Indica que a URL estava válida. '
+                                               'Para revalidá-la, clique no botão Capturar Texto')
+    atualizado = models.BooleanField('Texto atualizado', default=False,   # se o texto_completo foi atualizado
+                                     help_text='Indica que o texto da notícia foi capturado')
+    revisado = models.BooleanField('Texto revisado', default=False, # se o texto completo foi revisado por um editor
+                                   help_text='Permite que editor indique que o texto foi revisado. '
+                                             'Após esta marcação, o sistema não atualiza mais nenhuma informação.')
+    pdf_atualizado = models.BooleanField('PDF gerado', default=False,   # se o PDF foi obtido com sucesso
+                                         help_text='Indica que o PDF da página já está arquivado')
+    coletanea = models.BooleanField('Coletânea', default=False,
+                                    help_text='Indica que o artigo é uma coletânea de várias notícias')
     visivel = models.BooleanField('Visível ao público', default=True)  # se o artigo é visivel no timeline
     titulo = models.TextField('Título')
     texto = models.TextField('Texto Base', null=True, blank=True)
@@ -80,7 +87,7 @@ class Noticia(models.Model):
     nuvem = models.TextField(null=True, blank=True)
     texto_busca = models.TextField(null=True, blank=True)
     id_externo = models.IntegerField(null=True, blank=True, db_index=True)
-    notas = models.TextField(blank=True, null=True)
+    notas = models.TextField(blank=True, null=True, help_text='Notas sobre a coleta')
 
     objects = NoticiaQueryset.as_manager()
 
@@ -128,15 +135,15 @@ class Noticia(models.Model):
             return mark_safe(f'<a href="/media/pdf/{self.id}.pdf" target="_blank">Baixar PDF</a>')
         else:
             return ''
-
     pdf_file.short_description = 'PDF Atual'
 
     def save(self, *args, **kwargs):
         if not self.url_hash:
             self.url_hash = hashlib.sha256(self.url.encode('utf-8')).hexdigest()
 
-        if not self.url_valida and self.visivel:
-            self.url_valida = test_url(self.url)
+        if not self.revisado:
+            if not self.url_valida and not self.pdf_atualizado:
+                self.url_valida = test_url(self.url)
 
         if 'form' in kwargs:
             form = kwargs['form']

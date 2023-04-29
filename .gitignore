@@ -19,3 +19,4 @@ theme
 timeline/local.py
 db.original
 createdb.sql
+*.log

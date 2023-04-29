@@ -323,6 +323,7 @@ def scrap_text(request, id):
 
         if not noticia.revisado:
             noticia.texto_completo = extract_text(soup)
+        noticia.atualizado = True
         noticia.save()
     else:
         messages.info(request, 'Não foi possível carregar a URL. Realize a carga manual')
@@ -464,7 +465,7 @@ def arquivo_json(request):
 def lista_de_fontes(request, termo):
     queryset = Assunto.objects.fontes(termo)
     pagina = request.GET.get('page', 1)
-    paginator = Paginator(queryset, 30)
+    paginator = Paginator(queryset, 50)
 
     try:
         fontes = paginator.page(pagina)
@@ -473,7 +474,7 @@ def lista_de_fontes(request, termo):
     except InvalidPage:
         fontes = paginator.page(paginator.num_pages)
 
-    result = {'paginas': fontes.paginator.num_pages, 'lista': list(fontes.object_list)}
+    result = {'paginas': fontes.paginator.num_pages, 'pagina': pagina, 'lista': list(fontes.object_list)}
 
     return JsonResponse(result)
 
