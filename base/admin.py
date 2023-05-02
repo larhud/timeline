@@ -6,13 +6,9 @@ from django.contrib import admin
 from django.forms.widgets import ClearableFileInput
 from django.forms.widgets import NumberInput, URLInput
 from django.urls import reverse
-from poweradmin.admin import PowerModelAdmin, InlineModelAdmin, PowerButton
+from poweradmin.admin import PowerModelAdmin, PowerButton
 
 from .models import Noticia, Termo, Assunto
-
-
-class AssuntoInline(InlineModelAdmin):
-    model = Assunto
 
 
 class NoticiaFormAdd(forms.ModelForm):
@@ -185,6 +181,19 @@ class TermoAdmin(PowerModelAdmin):
     search_fields = ('termo',)
     list_display = ('termo', 'slug', 'tot_noticias', 'tot_invalidas')
     readonly_fields = ('tot_noticias', 'tot_invalidas')
+
+    def get_buttons(self, request, object_id=None):
+        buttons = super().get_buttons(request, object_id)
+
+        if object_id is not None:
+            buttons.append(
+                PowerButton(
+                    url=reverse('admin:base_noticia_changelist') + f'?assunto__termo__id__exact={object_id}',
+                    label='Fontes', attrs={'target': '_blank'}
+                )
+            )
+
+        return buttons
 
 
 admin.site.register(Termo, TermoAdmin)
