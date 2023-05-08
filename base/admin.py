@@ -6,13 +6,9 @@ from django.contrib import admin
 from django.forms.widgets import ClearableFileInput
 from django.forms.widgets import NumberInput, URLInput
 from django.urls import reverse
-from poweradmin.admin import PowerModelAdmin, InlineModelAdmin, PowerButton
+from poweradmin.admin import PowerModelAdmin, PowerButton
 
 from .models import Noticia, Termo, Assunto
-
-
-class AssuntoInline(InlineModelAdmin):
-    model = Assunto
 
 
 class NoticiaFormAdd(forms.ModelForm):
