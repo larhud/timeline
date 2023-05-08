@@ -182,19 +182,6 @@ class TermoAdmin(PowerModelAdmin):
     list_display = ('termo', 'slug', 'tot_noticias', 'tot_invalidas')
     readonly_fields = ('tot_noticias', 'tot_invalidas')
 
-    def get_buttons(self, request, object_id=None):
-        buttons = super().get_buttons(request, object_id)
-
-        if object_id is not None:
-            buttons.append(
-                PowerButton(
-                    url=reverse('admin:base_noticia_changelist') + f'?assunto__termo__id__exact={object_id}',
-                    label='Fontes', attrs={'target': '_blank'}
-                )
-            )
-
-        return buttons
-
 
 admin.site.register(Termo, TermoAdmin)
 admin.site.register(Noticia, NoticiaAdmin)

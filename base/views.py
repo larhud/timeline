@@ -465,7 +465,8 @@ def arquivo_json(request):
 def lista_de_fontes(request, termo):
     queryset = Assunto.objects.fontes(termo)
     pagina = request.GET.get('page', 1)
-    paginator = Paginator(queryset, 50)
+    itens_por_pagina = request.GET.get('pageSize', 50)
+    paginator = Paginator(queryset, itens_por_pagina)
 
     try:
         fontes = paginator.page(pagina)
@@ -474,7 +475,8 @@ def lista_de_fontes(request, termo):
     except InvalidPage:
         fontes = paginator.page(paginator.num_pages)
 
-    result = {'paginas': fontes.paginator.num_pages, 'pagina': pagina, 'lista': list(fontes.object_list)}
+    result = {'num_pages': fontes.paginator.num_pages, 'pagina': pagina, 'items': list(fontes.object_list),
+              'fields': {'noticia__fonte': 'Fonte', 'validos': 'Notícias Válidas', 'total': 'Total de Notícias'} }
 
     return JsonResponse(result)
 
