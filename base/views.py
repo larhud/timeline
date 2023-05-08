@@ -475,8 +475,11 @@ def lista_de_fontes(request, termo):
     except InvalidPage:
         fontes = paginator.page(paginator.num_pages)
 
-    result = {'num_pages': fontes.paginator.num_pages, 'pagina': pagina, 'items': list(fontes.object_list),
-              'fields': {'noticia__fonte': 'Fonte', 'validos': 'Notícias Válidas', 'total': 'Total de Notícias'} }
+    result = {
+        'num_pages': fontes.paginator.num_pages, 'total': fontes.paginator.count,
+        'pagina': pagina, 'items': list(fontes.object_list),
+        'fields': {'noticia__fonte': 'Fonte', 'total': 'Total de Notícias', 'invalidos': 'URL Inválidas'}
+    }
 
     return JsonResponse(result)
 

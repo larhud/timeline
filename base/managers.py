@@ -163,6 +163,7 @@ class AssuntoManager(models.Manager):
     def fontes(self, termo):
         return self.filter(termo__pk=termo, noticia__visivel=True).values('noticia__fonte').annotate(
             validos=Count('noticia__url_valida', filter=Q(noticia__url_valida=True)),
+            invalidos=Count('noticia__url_valida', filter=Q(noticia__url_valida=False)),
             total=Count('noticia__id')).order_by('noticia__fonte')
 
         # return self.filter(termo__pk=termo, noticia__visivel=True).exclude(noticia__fonte='').\

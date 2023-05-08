@@ -14,8 +14,9 @@ function initPagination(name, data_url, callback) {
         pageSize: 10,
         dataSource: data_url,
         totalNumberLocator: function (data) {
+            // Indicar a quantidade total de registros da base, para o plugin calcular a quantidade de páginas!
             // data = retorno da url indicada em dataSource
-            return data.num_pages;
+            return data.total;
         },
         showPageNumbers: true,
         showPrevious: false,
