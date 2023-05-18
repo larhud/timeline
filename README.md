@@ -28,11 +28,10 @@ mkdir logs
 5. Instalar as libs
 > pip install -r requirements.txt
 
-6. Preparar o Banco de Dados. A base default está em sqlite e é mais que suficiente para que você possa testar a ferramenta.
+6. Copie o local.py de configs/defaults/local.py para a pasta onde se encontra o settings.py e faça os ajustes necessários para configurar o seu ambiente. Para executar o sistema em um servidor diferente da sua máquina, recomendamos que utilize o servidor NGINX e o Supervisor como gerenciador. Na mesma pasta configs/defaults existem exemplos de arquivos de configuração para ambos os serviços.
+
+7. Preparar o Banco de Dados. A base default está em sqlite e é mais que suficiente para que você possa testar a ferramenta.
 > python manage.py migrate
-
-7. Caso queira instalar o timeline em servidor externo, copie o local.py de configs/defaults/local.py para a pasta onde se encontra o settings.py e faça os ajustes necessários para configurar o seu servidor. Recomendamos que utilize o servidor NGINX e o Supervisor como gerenciador. Na mesma pasta configs/defaults existem exemplos de arquivos de configuração para ambos os serviços.
-
 
 8. Cria o superuser
 > python manage.py createsuperuser
