@@ -1,0 +1,346 @@
+{% load static %}
+{% load core_extra %}
+<! DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LARHUD - Tempora</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="{% static 'site/css/home-style.css' %}" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
+      integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="https://unpkg.com/swiper@8/swiper-bundle.min.css"/>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-xl navbar-light bg-larhud">
+      <div class="container">
+        <a class="navbar-brand" href="http://www.larhud.ibict.br">
+            <img src="{% static 'site/img/logoLARHUD.png' %}" alt="" />
+            <img src="{% static 'site/img/logoIbict.png' %}" alt="" />
+        </a>
+        <div class="d-flex align-items-center">
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarCollapse"
+            aria-controls="navbarCollapse"
+            aria-expanded="false"
+            aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+        </div>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+          <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/">Início</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="http://www.larhud.ibict.br">Sobre o Larhud</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="http://www.larhud.ibict.br/timeline-larhud-ibict/">Sobre o Projeto</a>
+                </li>
+          </ul>
+          <div class="pesquisa d-none d-md-block">
+            <form class="search-container">
+              <input
+                id="search-box"
+                type="text"
+                class="search-box"
+                placeholder="Buscar"
+                name="q"
+              />
+              <label for="search-box">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M19 19L14.65 14.65M17 9C17 13.4183 13.4183 17 9 17C4.58172 17 1 13.4183 1 9C1 4.58172 4.58172 1 9 1C13.4183 1 17 4.58172 17 9Z"
+                    stroke="#101828"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </label>
+            </form>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <section class="banner">
+      <div class="container content">
+        <div class="esquerda">
+          <h5 class="font-ibm">LINHAS DO TEMPO</h5>
+          <img src="{% static 'site/img/tempora2.png' %}" class="mb-4" alt="" />
+          <p>Tempora é uma ferramenta (na forma de uma plataforma) produzida pelo Laboratório em Rede de Humanidades Digitais (Larhud) a partir do Timeline JS, software de storytelling criado pelo KnightLab da Northwestern University, EUA.</p>
+          <p></p>
+        </div>
+        <div>
+          <img src="{% static 'site/img/banner.png' %}" class="img-fluid" alt="" />
+        </div>
+        <div class="direita d-none d-md-block">
+          <h4 class="font-ibm">Visualização de um ou mais fatos históricos</h4>
+          <ul>
+            <li>Temático específico dentro da coleção</li>
+            <li>Recorte temporal</li>
+            <li>Nuvem de palavras</li>
+            <li>Fontes verificadas</li>
+          </ul>
+        </div>
+      </div>
+      <div class="container d-none d-md-block">
+        <div class="anos">
+          <div class="item">
+            <p>1994</p>
+            <div class="ball"></div>
+          </div>
+          <div class="linha"><div></div></div>
+          <div class="item">
+            <p>2000</p>
+            <div class="ball"></div>
+          </div>
+          <div class="itemActive">
+            <div class="ball">
+              <div></div>
+            </div>
+          </div>
+          <div class="item">
+            <p>2022</p>
+            <div class="ball"></div>
+          </div>
+          <div class="item">
+            <p>2023</p>
+            <div class="ball"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="objetivos">
+      <div class="container">
+        <div class="colunas">
+          <div class="">
+            <div class="titulo">
+              <h5>OBJETIVOS</h5>
+              <p>Permitir que pesquisadores construam linhas de tempo sobre uma determinada temática</p>
+            </div>
+            <hr/>
+            <p>Diferentemente da versão original do Timeline JS, o Tempora é mais do que uma ferramenta de visualização de links em ordem cronológica. É uma plataforma de arquivamento, organização, catalogação e visualização da informação digital disponível na web.</p>
+            <p>Proporciona o encadeamento cronológico de fatos, registros e demais informações textuais, imagéticas, em vídeo, postagens e demais formatos. Seu sistema, que constitui o avesso da imagem que vemos na plataforma, organiza os dados e gera datasets integrais e/ou parciais ao usuário.
+          </div>
+          <div>
+            <p>Além disso, detém um recurso de busca simples e avançada onde o usuário pode buscar no corpora de todo o material arquivado e que compõe a coleção disposta no formato de linha do tempo, termos e sentenças além de restringir temporalmente a busca.</p>
+            <p>
+              Permite assim a visualização de fatos históricos que se
+              tornam recuperáveis a partir de notícias da mídia ou de outras
+              fontes verificadas que são coletadas pelo pesquisador responsável
+              e armazenadas/arquivadas no sistema da Timeline.
+            </p>
+            <p>
+              Dessa forma, o usuário consegue navegar não só pela linha do
+              tempo, escolhendo um recorte temporal ou temático específico
+              dentro da coleção que compõe aquela timeline a partir de um
+              recurso de busca simples e avançado, como também visualizar quais
+              os termos mais utilizados durante o intervalo pesquisado na forma
+              de nuvem de palavras.
+            </p>
+            <img src="{% static 'site/img/tempora.png' %}" alt="" />
+          </div>
+        </div>
+        <hr />
+      </div>
+    </section>
+    <section class="timeline">
+      <div class="container">
+        <div class="topo">
+          <div class="titulo">
+            <h5>TIMELINES</h5>
+            <h2>Projeto em Desenvolvimento</h2>
+            <p>
+              Atualmente temos as seguinha linhas cronológico desenvolvidas.
+            </p>
+          </div>
+          <select class="form-select" aria-label="" id="ordem-termos">
+            <option value="-pk" selected>Os mais novos primeiro</option>
+            <option value="pk">Os mais antigos primeiro</option>
+          </select>
+        </div>
+
+        <div class="d-lg-block">
+          <div class="data-container" id="item-container-termos"></div>
+          <div id="pagination-termos"></div>
+        </div>
+        <hr />
+      </div>
+    </section>
+    <section class="contato">
+      <div class="container">
+        <div class="colunas">
+          <div class="esquerda">
+            <div class="titulo">
+              <h2>Entrar em contato</h2>
+              <p>Adoraríamos ouvir o que você achou da plataforma</p>
+            </div>
+            <h5 class="mt-5">Siga-nos</h5>
+            <div class="redes">
+              <a href="https://twitter.com/larhud1" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-twitter"></i></a>
+              <a href="https://www.facebook.com/larhud/" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook"></i></a>
+              <a href="https://www.youtube.com/channel/UC-MNEY-O0GOvkUD7NgR6Btg" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube"></i></a>
+            </div>
+          </div>
+          <div class="formulario">
+            <form id="form-contato" action="{% url 'novo_contato' %}" method="POST">
+              {% csrf_token %}
+              <div class="row-mb-3 validation" id="__all___message"></div>
+              <div class="row mb-3">
+                <div class="col-md-6 mb-3 mb-md-0">
+                  <label>Nome</label>
+                  <input type="text" class="form-control" placeholder="Informe seu nome" id="id_nome" name="nome" />
+                </div>
+                <div class="col-sm-10 validation" id="nome_message"></div>
+              </div>
+              <div class="row mb-3 mb-3 mb-md-0">
+                <div class="col-md-12">
+                  <label for="id_email">Email</label>
+                  <input type="email" class="form-control" placeholder="Informe seu email" id="id_email" name="email" />
+                </div>
+                <div class="col-sm-10 validation" id="email_message"></div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <label for="id_telefone">Número de telefone</label>
+                  <input type="tel" class="form-control" placeholder="+55 (00) 0000-00000" id="id_telefone" name="telefone"/>
+                </div>
+                <div class="col-sm-10 validation" id="telefone_message"></div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <label for="id_mensagem">Mensagem</label>
+                  <textarea name="mensagem" id="id_mensagem" class="form-control" rows="2" ></textarea>
+                </div>
+                <div class="col-sm-10 validation" id="mensagem_message"></div>
+              </div>
+              <div class="row mb-3">
+                <div class="col">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="T" id="flexCheckDefault" name="politica_privacidade"/>
+                    <label class="form-check-label" for="flexCheckDefault">
+                      Você concorda com nossa
+                      <a target="_blank" href="/politica-privacidade">política de privacidade</a>.
+                    </label>
+                  </div>
+                  <div class="col-sm-10 validation" id="politica_privacidade_message"></div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col d-grid d-md-block">
+                  <button type="submit" class="btn btn-primary" id="btn-enviar">Enviar mensagem</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+    <footer class="rodape">
+      <div class="linha1">
+        <div class="container">
+          <div>
+            <a class="d-flex align-items-center" href="#"
+              ><img src="img/logoLarhudBranca.png" alt="" /><img
+                src="img/logoIbictBranca.png"
+                alt=""
+            /></a>
+            <p class="mt-4">Projeto Timeline Larhud /IBICT, linhas do tempo.</p>
+          </div>
+
+          <div class="menu">
+            <div class="coluna">
+              <h6>Sobre</h6>
+              <div class="links">
+                <a href="#">Sobre o Larhud </a>
+                <a href="#">Participantes</a>
+              </div>
+            </div>
+            <div class="coluna">
+              <h6>Suporte</h6>
+              <div class="links">
+                <a href="#">Termos de uso</a>
+                <a href="#">Política de Privacidade</a>
+              </div>
+            </div>
+            <div class="coluna">
+              <h6>Fale Conosco</h6>
+              <div class="links contatos">
+                <a href="larhud@ibict.br"
+                  ><svg
+                    width="22"
+                    height="18"
+                    viewBox="0 0 22 18"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M21 3C21 1.9 20.1 1 19 1H3C1.9 1 1 1.9 1 3M21 3V15C21 16.1 20.1 17 19 17H3C1.9 17 1 16.1 1 15V3M21 3L11 10L1 3"
+                      stroke="white"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  larhud@ibict.br</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="linha2">
+        <div class="container">
+          <p>
+            PPGCI/IBICT | UFRJ - Esta obra está licenciada sob uma Licença
+            Creative Commons
+          </p>
+          <div class="redes d-flex">
+            <a href="#" target="_blank" rel="noopener noreferrer"
+              ><i class="fa-brands fa-twitter"></i
+            ></a>
+            <a href="#" target="_blank" rel="noopener noreferrer"
+              ><i class="fa-brands fa-facebook"></i
+            ></a>
+            <a href="#" target="_blank" rel="noopener noreferrer"
+              ><i class="fa-brands fa-youtube"></i
+            ></a>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <script>
+      window.__lista_de_termos__ = "{% url 'lista_de_termos' %}";
+    </script>
+    <script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'js/pagination.min.js' %}"></script>
+    <script src="{% static 'site/js/lista-de-termos.js' %}"></script>
+    <script src="{% static 'site/js/contato.js' %}"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>

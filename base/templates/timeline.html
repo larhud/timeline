@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}LARHUD ibict - Timeline {{ object|capfirst }}{% endblock %}
+{% block content %}
+        <section class="container descricao">
+            {% block termo_descricao %}
+            <h1>Timeline Covid-19</h1>
+            <p>O projeto propõe a descrição da produção de linha cronológica (timeline) de informações midiáticas sobre
+                a COVID-19. O objetivo é produzir, a partir da recuperação de notícias (grande mídia e instituições
+                federais) sobre a COVID-19, uma linha do tempo a partir do primeiro caso no Brasil até o momento.</p>
+            {% endblock %}
+        </section>
+        <section class="filtro">
+            <div class="container">
+                <form id="form-busca">
+                  <label for="">Filtrar por:</label>
+                  <div class="form">
+                      <div class="campo">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path fill-rule="evenodd" clip-rule="evenodd"
+                                  d="M11.6115 2C6.30323 2 2 6.20819 2 11.3993C2 16.5903 6.30323 20.7985 11.6115 20.7985C13.8819 20.7985 15.9684 20.0287 17.613 18.7415L20.7371 21.7886L20.8202 21.8586C21.1102 22.0685 21.5214 22.0446 21.7839 21.7873C22.0726 21.5043 22.072 21.0459 21.7825 20.7636L18.6952 17.7523C20.2649 16.0794 21.2231 13.8487 21.2231 11.3993C21.2231 6.20819 16.9198 2 11.6115 2ZM11.6115 3.44774C16.1022 3.44774 19.7426 7.00776 19.7426 11.3993C19.7426 15.7908 16.1022 19.3508 11.6115 19.3508C7.12086 19.3508 3.48044 15.7908 3.48044 11.3993C3.48044 7.00776 7.12086 3.44774 11.6115 3.44774Z"
+                                  fill="#11142D" />
+                          </svg>
+                          <input type="text" name="busca" placeholder="Busca" id="busca">
+                          <button id="btn-busca" class="btn btn-primary">Buscar</button>
+                          <button id="btn-avancada" class="btn btn-secondary avancada" data-bs-toggle="collapse" href="#collapseExample"
+                              role="button" aria-expanded="false" aria-controls="collapseExample"><span class="d-none d-md-inline">Pesquisa
+                                  Avançada</span><svg class="d-inline d-md-none" width="22" height="22" viewBox="0 0 22 22" fill="none"
+                                  xmlns="http://www.w3.org/2000/svg">
+                                  <g clip-path="url(#clip0_101_7811)">
+                                      <path
+                                          d="M13.0625 8.25V9.625C13.0625 9.90859 12.8305 10.1406 12.5469 10.1406H10.1406V12.5469C10.1406 12.8305 9.90859 13.0625 9.625 13.0625H8.25C7.96641 13.0625 7.73438 12.8305 7.73438 12.5469V10.1406H5.32812C5.04453 10.1406 4.8125 9.90859 4.8125 9.625V8.25C4.8125 7.96641 5.04453 7.73438 5.32812 7.73438H7.73438V5.32812C7.73438 5.04453 7.96641 4.8125 8.25 4.8125H9.625C9.90859 4.8125 10.1406 5.04453 10.1406 5.32812V7.73438H12.5469C12.8305 7.73438 13.0625 7.96641 13.0625 8.25ZM21.6992 20.4832L20.4832 21.6992C20.0793 22.1031 19.4262 22.1031 19.0266 21.6992L14.7383 17.4152C14.5449 17.2219 14.4375 16.9598 14.4375 16.6848V15.9844C12.9207 17.1703 11.0129 17.875 8.9375 17.875C4.00039 17.875 0 13.8746 0 8.9375C0 4.00039 4.00039 0 8.9375 0C13.8746 0 17.875 4.00039 17.875 8.9375C17.875 11.0129 17.1703 12.9207 15.9844 14.4375H16.6848C16.9598 14.4375 17.2219 14.5449 17.4152 14.7383L21.6992 19.0223C22.0988 19.4262 22.0988 20.0793 21.6992 20.4832ZM14.7812 8.9375C14.7812 5.70625 12.1687 3.09375 8.9375 3.09375C5.70625 3.09375 3.09375 5.70625 3.09375 8.9375C3.09375 12.1687 5.70625 14.7812 8.9375 14.7812C12.1687 14.7812 14.7812 12.1687 14.7812 8.9375Z"
+                                          fill="#fff" />
+                                  </g>
+                                  <defs>
+                                      <clipPath id="clip0_101_7811">
+                                          <rect width="22" height="22" fill="white" />
+                                      </clipPath>
+                                  </defs>
+                              </svg>
+                          </button>
+                      </div>
+
+                  </div>
+
+                  <input type="hidden" name="ano_mes_0" id="ano-busca">
+                  <input type="hidden" name="ano_mes_1" id="mes-busca">
+                  {% block hidden_inputs %}
+                  {% endblock %}
+                  <div id="busca-avancada-form"></div>
+
+                </form>
+              <div id="busca-avancada" class="" >
+                <div class="collapse" id="collapseExample">
+                <div class="row mt-3 d-flex align-items-center">
+                    <div class="col-md-3">
+                        <input type="text" id="dataFiltro" class="form-control" name="datafiltro" placeholder="Busca por data">
+                    </div>
+                    <div class="col">
+                        <div class="accordion" id="accordionEstados">
+                            <div class="accordion-item"  style="display:none">
+                                <h2 class="accordion-header" id="headingEstados">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#estados" aria-expanded="false" aria-controls="estados">
+                                        Estados
+                                    </button>
+                                </h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" name="veiculo" placeholder="Veículo de Comunicação" id="veiculo" class="form-control" style="width:400px; margin-top: 2px;">
+                    </div>
+                    <div class="col">
+                        <button id="btn-fonte" class="btn btn-secondary d-flex justify-content-end" data-bs-toggle="collapse" href="#collapseFonte"
+                              role="button" aria-expanded="false" aria-controls="collapseFonte" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Clique para visualizar os veículos existentes">
+                            <span class="d-none d-md-inline">Listagem</span><svg class="d-inline d-md-none" width="42" height="22" viewBox="0 0 22 22" fill="none"
+                                  xmlns="http://www.w3.org/2000/svg">
+                                  <g clip-path="url(#clip0_101_7811)">
+                                      <path
+                                          d="M13.0625 8.25V9.625C13.0625 9.90859 12.8305 10.1406 12.5469 10.1406H10.1406V12.5469C10.1406 12.8305 9.90859 13.0625 9.625 13.0625H8.25C7.96641 13.0625 7.73438 12.8305 7.73438 12.5469V10.1406H5.32812C5.04453 10.1406 4.8125 9.90859 4.8125 9.625V8.25C4.8125 7.96641 5.04453 7.73438 5.32812 7.73438H7.73438V5.32812C7.73438 5.04453 7.96641 4.8125 8.25 4.8125H9.625C9.90859 4.8125 10.1406 5.04453 10.1406 5.32812V7.73438H12.5469C12.8305 7.73438 13.0625 7.96641 13.0625 8.25ZM21.6992 20.4832L20.4832 21.6992C20.0793 22.1031 19.4262 22.1031 19.0266 21.6992L14.7383 17.4152C14.5449 17.2219 14.4375 16.9598 14.4375 16.6848V15.9844C12.9207 17.1703 11.0129 17.875 8.9375 17.875C4.00039 17.875 0 13.8746 0 8.9375C0 4.00039 4.00039 0 8.9375 0C13.8746 0 17.875 4.00039 17.875 8.9375C17.875 11.0129 17.1703 12.9207 15.9844 14.4375H16.6848C16.9598 14.4375 17.2219 14.5449 17.4152 14.7383L21.6992 19.0223C22.0988 19.4262 22.0988 20.0793 21.6992 20.4832ZM14.7812 8.9375C14.7812 5.70625 12.1687 3.09375 8.9375 3.09375C5.70625 3.09375 3.09375 5.70625 3.09375 8.9375C3.09375 12.1687 5.70625 14.7812 8.9375 14.7812C12.1687 14.7812 14.7812 12.1687 14.7812 8.9375Z"
+                                          fill="#fff" />
+                                  </g>
+                                  <defs>
+                                      <clipPath id="clip0_101_7811">
+                                          <rect width="22" height="22" fill="white" />
+                                      </clipPath>
+                                  </defs>
+                              </svg>
+                          </button>
+                    </div>
+                    <div class="col d-flex justify-content-end">
+                        <button class="btn btn-down" id="btn-download" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true"
+                          title="<strong>Download</strong> <p>Baixe o dataset com os resultados da pesquisa realizada.</p>">
+                          <svg width="23" height="24" viewBox="0 0 23 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M11.8643 4.5V15.5" stroke="#11142D" stroke-width="2" stroke-linecap="round"
+                                  stroke-linejoin="round" />
+                              <path d="M16.6102 10.5L11.8644 15.5L7.11865 10.5" stroke="#11142D" stroke-width="2"
+                                  stroke-linecap="round" stroke-linejoin="round" />
+                              <path d="M18.5085 19.5H5.22034" stroke="#11142D" stroke-width="2" stroke-linecap="round"
+                                  stroke-linejoin="round" />
+                          </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="fontes-noticia">
+                <div class="collapse borda p-3" id="collapseFonte">
+                    <div class="row" id="lista-de-fontes"></div>
+                    <ul class="pagination" style="margin-top:20px; margin-bottom:0px;" id="paginas"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="meses">
+            <div class="container invisible" id="container-ano-mes">
+                <div class="esquerda d-none d-sm-block">
+                    <a href="#"class="anterior"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.57 5.92999L3.5 12L9.57 18.07" stroke="#B2B3BD" stroke-width="1.5"
+                                stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M20.5 12H3.67001" stroke="#B2B3BD" stroke-width="1.5" stroke-miterlimit="10"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <span id="mesAnterior"></span>
+                    </a>
+                </div>
+                <div class="centro">
+                    <div class="mes">
+                        <h2 id="mesAtual"></h2>
+                        <a href="#" id="dropDownMes" data-bs-toggle="dropdown" aria-expanded="false">
+
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z"
+                                    stroke="#244CB2" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                                <path d="M8.46997 10.64L12 14.16L15.53 10.64" stroke="#244CB2" stroke-width="1.5"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropDownMes">
+                            <li><button class="dropdown-item" onclick="selecionaMesEBusca(0)" type="button">Janeiro</button></li>
+                            <li><button class="dropdown-item" onclick="selecionaMesEBusca(1)" type="button">Fevereiro</button></li>
+                            <li><button class="dropdown-item" onclick="selecionaMesEBusca(2)" type="button">Março</button></li>
+                            <li><button class="dropdown-item" onclick="selecionaMesEBusca(3)" type="button">Abril</button></li>
+                            <li><button class="dropdown-item" onclick="selecionaMesEBusca(4)" type="button">Maio</button></li>
+                            <li><button class="dropdown-item" onclick="selecionaMesEBusca(5)" type="button">Junho</button></li>
+                            <li><button class="dropdown-item" onclick="selecionaMesEBusca(6)" type="button">Julho</button></li>
+                            <li><button class="dropdown-item" onclick="selecionaMesEBusca(7)" type="button">Agosto</button></li>
+                            <li><button class="dropdown-item" onclick="selecionaMesEBusca(8)" type="button">Setembro</button></li>
+                            <li><button class="dropdown-item" onclick="selecionaMesEBusca(9)" type="button">Outubro</button></li>
+                            <li><button class="dropdown-item" onclick="selecionaMesEBusca(10)" type="button">Novembro</button></li>
+                            <li><button class="dropdown-item" onclick="selecionaMesEBusca(11)" type="button">Dezembro</button></li>
+                        </ul>
+                    </div>
+                    <div class="ano">
+                        <h2 id="anoSelecionado"></h2>
+                        <a href="#" id="dropDownAno" data-bs-toggle="dropdown" aria-expanded="false"><svg width="24"
+                                height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z"
+                                    stroke="#244CB2" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                                <path d="M8.46997 10.64L12 14.16L15.53 10.64" stroke="#244CB2" stroke-width="1.5"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg></a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropDownAno" id="ul-ano"></ul>
+                    </div>
+                </div>
+                <div class="direita d-none d-sm-block">
+                    <a href="#" class="proximo">
+                        <span id="mesProximo"></span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14.4301 5.92999L20.5001 12L14.4301 18.07" stroke="#292D32" stroke-width="1.5"
+                                stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M3.5 12H20.33" stroke="#292D32" stroke-width="1.5" stroke-miterlimit="10"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+        </section>
+        <section class="timeline">
+            <link title="timeline-styles" rel="stylesheet" href="{{ STATIC_URL }}css/timeline.css">
+            <script src="{{ STATIC_URL }}js/timeline.js"></script>
+            <div id='timeline-embed' class='tl-timeline' style="width: 100%; height: 600px"></div>
+            <!-- iframe frameborder="0"
+                src="https://cdn.knightlab.com/libs/timeline3/latest/embed/index.html?source=1xuY4upIooEeszZ_lCmeNx24eSFWe0rHe9ZdqH2xqVNk&amp;font=Default&amp;lang=en&amp;initial_zoom=2&amp;height=100%"
+                height="700px" width="100%"></iframe -->
+        </section>
+        <section class="nuvem">
+            <div class="container d-flex justify-content-center">
+                <div id="palavras"></div>
+            </div>
+        </section>
+{% endblock %}
+
+{% block js %}
+    {{ block.super }}
+    <script src="{{ STATIC_URL }}site/js/jqcloud.min.js"></script>
+    <script type="text/javascript">
+      window.url_pesquisa = '{% url 'pesquisa' %}';
+      window.url_nuvem_de_palavras = '{% url 'nuvem_de_palavras' %}';
+      window.url_lista_de_fontes = '{% url 'lista_de_fontes' object.id %}'
+    </script>
+    <script src="{{ STATIC_URL }}site/js/main.js"></script>
+    <script src="{{ STATIC_URL }}site/js/lista-de-fontes.js"></script>
+{% endblock %}
