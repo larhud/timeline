@@ -157,10 +157,9 @@ class Noticia(models.Model):
             self.imagem = None
 
         # só monta a nuvem se o texto fo visivel e ainda não estiver marcado como revisado
-        if not self.visivel or self.revisado:
-            if not self.revisado:
-                self.texto_busca = None
-                self.nuvem = None
+        if not self.visivel or not self.revisado:
+            self.texto_busca = None
+            self.nuvem = None
         else:
             nuvem, nuvem_sem_bigramas = self.gerar_nuvem()
             if nuvem:

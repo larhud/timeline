@@ -108,6 +108,11 @@ class ThemeForm(forms.ModelForm):
         except:
             raise forms.ValidationError(u'O arquivo .zip está corrompido.')
 
+        dirname = os.path.join(settings.MEDIA_ROOT, 'uploads', 'themes')
+        if os.path.exists(os.path.join(dirname, self.cleaned_data.get('path_name'))):
+            raise forms.ValidationError(u'Já existe uma pasta com o nome %s. Escolha outro nome para o tema' %
+                                        self.cleaned_data.get('path_name'))
+
         if not self.have_first_dir(zip):
             raise forms.ValidationError(u'O template enviado não possui uma pasta inicial.')
         return theme
@@ -129,11 +134,11 @@ class ThemeForm(forms.ModelForm):
         os.rename(os.path.join(dirname, self._path_nome(zip)), os.path.join(dirname, self.instance.path_name))
 
         self.instance.path = os.path.join(dirname, self.instance.path_name)
-        files_copied = ['404.html', '502.html']
+        files_copied = ['404.html', '500.html', '502.html']
         for file in files_copied:
-            if not os.path.exists(os.path.join(self.instance.path, 'templates', file)):
-                src = os.path.join(settings.PROJECT_DIR, 'cms', 'templates', file)
-                dst = os.path.join(self.instance.path, 'templates', file)
+            src = os.path.join(settings.PROJECT_DIR, 'powercms', 'cms', 'templates', file)
+            dst = os.path.join(self.instance.path, 'templates', file)
+            if not os.path.exists(dst):
                 copyfile(src, dst)
 
         # Collect Static

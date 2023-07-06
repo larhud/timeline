@@ -9,7 +9,7 @@ warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
 @task
 def deploy(context):
     connection = Connection('200.130.45.80', user='webapp', port=8090)
-    with connection.cd('/var/webapp/timeline/timeline'):
+    with connection.cd('/var/webapp/timeline3/timeline'):
         connection.run('git pull')
         connection.run('../bin/python manage.py migrate')
         connection.run('../bin/python manage.py collectstatic --noinput')
@@ -54,7 +54,7 @@ def backup(connection, base):
         connection.run('mysqldump -u timeline -p"%s" %s --no-tablespaces | gzip > %s' % (senha, base, filename))
         print(filename)
         connection.get(filename)
-        # connection.run('rm %s' % path+filename)
+        # connection.run('rm %s' % filename)
 
 
 @task
