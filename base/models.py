@@ -202,6 +202,31 @@ class Assunto(models.Model):
         return '%s' % self.noticia
 
 
+class Canal(models.Model):
+    nome = models.CharField(max_length=100)
+    domain = models.URLField()
+
+    def __str__(self):
+        return '%s' % self.nome
+
+
+class CanalRegra(models.Model):
+    TIPO_REGRA = (
+        ('C', 'Contém'),
+        ('I', 'Ignore')
+    )
+
+    canal = models.ForeignKey(Canal, on_delete=models.CASCADE)
+    tipo_regra = models.CharField(max_length=1, choices=TIPO_REGRA)
+    regra = models.TextField()
+
+    def __str__(self):
+        return f'{self.canal} {self.get_tipo_regra_display()}'
+
+    class Meta:
+        verbose_name = 'Regra do Canal'
+
+
 class Busca(models.Model):
     dt = models.DateTimeField(auto_now_add=True)
     hash = models.CharField(max_length=20, db_index=True)
