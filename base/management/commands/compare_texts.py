@@ -8,7 +8,7 @@ class Command(BaseCommand):
     help = 'Compares the user-reviewed text with the processed text from the Newspaper library'
 
     def handle(self, *args, **options):
-        news = Noticia.objects.filter(revisado=True)
+        news = Noticia.objects.filter(revisado=True, id=6636)
         for noticia in news:
             article = Article(noticia.url)
             article.download()
@@ -19,3 +19,5 @@ class Command(BaseCommand):
 
             if lev_ratio < 0.6:  # Altere este valor conforme necessário
                 print(f"As versões são muito diferentes para a notícia {noticia.id}")
+
+            print(article.text)

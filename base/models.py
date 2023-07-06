@@ -215,3 +215,20 @@ class Busca(models.Model):
         self.hash = slugify(self.busca)
         self.count = 0
         super(Busca, self).save(*args, **kwargs)
+
+
+class Fonte(models.Model):
+    descricao = models.CharField(max_length=80)
+    dominio = models.CharField(max_length=80)
+
+
+class FonteRegra(models.Model):
+    fonte = models.ForeignKey(Fonte)
+    tipo_regra = models.CharField(max_lenght=1) # Adicionar/Ignorar
+    tag_html = models.CharField(max_length=20)  # Exemplo: div
+    attributo = models.TextField(blank=True, null=True) # {'class':'entry-detail-alert', 'id': 'xpto'}
+
+# Aos Fatos, tipo_regra='A', tag_html = 'article', atributo=Nulo
+# Aos Fatos, tipo_regra='I', tag_html = 'div', atributo={"class":"entry-detail-alert"}
+# Aos Fatos, tipo_regra='I', tag_html = 'h1'
+# Aos Fatos, tipo_regra='I', tag_html = 'div', atributo={"class":"article-subtitle"}
