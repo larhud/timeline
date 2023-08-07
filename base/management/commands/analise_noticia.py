@@ -116,7 +116,6 @@ class Command(BaseCommand):
                            None],
                 'div': ["rodape-mapa-site-ans", "boxcinza-ans"],
                 'p': ["muted"]
-
             }
         },
         # outros domínios...
