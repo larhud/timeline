@@ -157,10 +157,9 @@ class Noticia(models.Model):
             self.imagem = None
 
         # só monta a nuvem se o texto fo visivel e ainda não estiver marcado como revisado
-        if not self.visivel or self.revisado:
-            if not self.revisado:
-                self.texto_busca = None
-                self.nuvem = None
+        if not self.visivel or not self.revisado:
+            self.texto_busca = None
+            self.nuvem = None
         else:
             nuvem, nuvem_sem_bigramas = self.gerar_nuvem()
             if nuvem:
@@ -200,6 +199,31 @@ class Assunto(models.Model):
 
     def __str__(self):
         return '%s' % self.noticia
+
+
+class Canal(models.Model):
+    nome = models.CharField(max_length=100)
+    domain = models.URLField()
+
+    def __str__(self):
+        return '%s' % self.nome
+
+
+class CanalRegra(models.Model):
+    TIPO_REGRA = (
+        ('C', 'Contém'),
+        ('I', 'Ignore')
+    )
+
+    canal = models.ForeignKey(Canal, on_delete=models.CASCADE)
+    tipo_regra = models.CharField(max_length=1, choices=TIPO_REGRA)
+    regra = models.TextField()
+
+    def __str__(self):
+        return f'{self.canal} {self.get_tipo_regra_display()}'
+
+    class Meta:
+        verbose_name = 'Regra do Canal'
 
 
 class Busca(models.Model):
