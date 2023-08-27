@@ -11,6 +11,7 @@ from django.conf import settings
 from bs4 import BeautifulSoup, NavigableString, Tag
 from urllib.parse import urlsplit
 from chardet import detect
+from fuzzywuzzy import fuzz
 
 from base.models import Canal, CanalRegra, Noticia
 
@@ -25,7 +26,7 @@ class Command(BaseCommand):
         'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'
     }
 
-    EXCLUDED_TAGS = {'nav', 'link', 'meta', 'img', 'icon', 'head', 'title', 'i', 'script', 'audio', 'source', 'noscript', 'button', 'submit', 'ul', 'li'}
+    EXCLUDED_TAGS = {'html', 'footer', 'em', 'section', 'header', 'body', 'style', 'nav', 'link', 'meta', 'img', 'icon', 'head', 'title', 'i', 'script', 'audio', 'source', 'noscript', 'button', 'submit', 'ul', 'li'}
 
     @staticmethod
     def get_encoding(filename, read_size=10000):
@@ -103,6 +104,7 @@ class Command(BaseCommand):
         """Função para normalizar o texto."""
         # Removendo caracteres problemáticos ou normalizando-os
         normalized_text = text.replace('“', '"').replace('”', '"').strip()
+        normalized_text = normalized_text.replace("&nbsp;", " ").strip()  # Convertendo &nbsp; para espaço
         return normalized_text
 
     def find_parent_with_class(self, tag):
@@ -114,12 +116,16 @@ class Command(BaseCommand):
             parent = parent.find_parent()
         return None
 
+    def clean_text(self, text):
+        # Remova espaços extras e retorne a string limpa
+        return " ".join(text.split())
+
     def handle(self, *args, **kwargs):
         noticia_id = kwargs.get('noticia_id')
 
         if noticia_id:
             try:
-                noticias = [Noticia.objects.get(id=noticia_id)]  # Assumindo que Noticia é um modelo
+                noticias = [Noticia.objects.get(id=noticia_id)]
             except Noticia.DoesNotExist:
                 print(f"Notícia com ID {noticia_id} não encontrada.")
                 return
@@ -135,7 +141,7 @@ class Command(BaseCommand):
         for noticia in noticias:
             print(f"Processando notícia com ID: {noticia.id}")
             domain = urlsplit(noticia.url).netloc
-            canal, _ = Canal.objects.get_or_create(domain=domain)  # Assumindo que Canal é um modelo
+            canal, _ = Canal.objects.get_or_create(domain=domain)
 
             html_content = self.load_html(noticia.url, noticia.id, use_cache=True)
             if not html_content:
@@ -149,45 +155,59 @@ class Command(BaseCommand):
                 a_tag.replace_with(a_tag.string if a_tag.string else "")
 
             df_noticia = pd.DataFrame(noticia.texto_completo.split('\n'), columns=['paragrafo'])
-            df_noticia['paragrafo'] = df_noticia['paragrafo'].apply(self.normalize_text)
+            df_noticia['paragrafo'] = df_noticia['paragrafo'].apply(lambda x: self.clean_text(self.normalize_text(x)))
             df_noticia['Situacao'] = 0
             df_noticia['TextoTag'] = "--"
             df_noticia = df_noticia[df_noticia['paragrafo'].str.strip() != ""]
-
-            previous_tag_name = None
-            previous_class = None
 
             for tag in soup.find_all():
                 if tag.name in self.EXCLUDED_TAGS:
                     continue
 
-                tag_content = self.normalize_text(tag.get_text(strip=True))
+                tag_content = self.clean_text(self.normalize_text(tag.get_text()))
+                print("Comparando com =====>>>>>>>>>", tag_content)
+
                 if not tag_content:
                     continue
 
-                if tag.name in ['p', 'span'] and ('class' not in tag.attrs or not tag.attrs['class']):
+                # Verifica se a tag possui class ou não
+                if 'class' not in tag.attrs or not tag.attrs['class']:
                     parent_with_class = self.find_parent_with_class(tag)
-                    tag_class = " ".join(parent_with_class.attrs['class']) if parent_with_class else previous_class
+                    tag_class = " ".join(parent_with_class.attrs['class']) if parent_with_class else None
                     tag_name = tag.name if parent_with_class is None else parent_with_class.name
+
+                    # Condicionais para verificar o tipo_regra baseado na Situacao do DataFrame
+                    matched_rows = df_noticia[df_noticia['paragrafo'] == tag_content]
+                    if matched_rows.shape[0] > 0 and matched_rows['Situacao'].iloc[0] == 1:
+                        tipo_regra = 'C'
+                    else:
+                        tipo_regra = 'I'
                 else:
                     tag_class = " ".join(tag.attrs.get('class', [])) or None
                     tag_name = tag.name
-                    previous_class = tag_class
+                    tipo_regra = 'I'
 
                 matched_rows = df_noticia[df_noticia['paragrafo'] == tag_content]
+                if matched_rows.shape[0] == 0:
+                    for index, row in df_noticia.iterrows():
+                        similarity = fuzz.partial_ratio(row['paragrafo'], tag_content)
+                        if similarity > 79:
+                            if index < len(df_noticia):
+                                matched_rows = df_noticia.iloc[[index]]
+                        else:
+                            print(f"Similaridade entre '{row['paragrafo']}' e '{tag_content}': {similarity}%")
 
                 if matched_rows.shape[0] > 0:
-                    tipo_regra = 'C'
                     df_noticia.loc[matched_rows.index, 'Situacao'] = 1
                     df_noticia.loc[matched_rows.index, 'TextoTag'] = tag_content
                     df_noticia.loc[matched_rows.index, 'TagClass'] = f"Tag: {tag_name}  Class: {tag_class}"
                 else:
-                    tipo_regra = 'I'
-                    df_noticia.loc[matched_rows.index, 'TextoTag'] = tag_content
                     print(f"Conteúdo da tag aceita -> '{tag_content}'", f"-- Nome da Tag -> '{tag_name}'",
                           f"-- Nome da Class -> '{tag_class}'", f"-- Tipo Regra --> '{tipo_regra}'")
 
+                # Resetando o índice do DataFrame
+                df_noticia.reset_index(drop=True, inplace=True)
                 CanalRegra.objects.get_or_create(canal=canal, tipo_regra=tipo_regra,
-                                                 regra=json.dumps((tag.name, tag_class)))
+                                                 regra=json.dumps((tag_name, tag_class)))
 
             print(df_noticia)
