@@ -151,7 +151,7 @@ class Command(BaseCommand):
             soup = BeautifulSoup(html_content, 'html.parser')
 
             # Removendo tags <a></a> mas mantendo o texto
-            for a_tag in soup.find_all('a'):
+            for a_tag in soup.find_all(['a', 'strong', 'b', 'i']):
                 a_tag.replace_with(a_tag.string if a_tag.string else "")
 
             df_noticia = pd.DataFrame(noticia.texto_completo.split('\n'), columns=['paragrafo'])
