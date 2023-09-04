@@ -126,5 +126,5 @@ class Command(BaseCommand):
 
             # Imprimir o conteúdo do DataFrame
             print("\nConteúdo do DataFrame:")
-            print("----------------------")
+            print("-----------------------")
             print(df.to_string(index=False))

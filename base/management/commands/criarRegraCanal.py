@@ -30,6 +30,10 @@ class Command(BaseCommand):
 
     @staticmethod
     def get_encoding(filename, read_size=10000):
+        """
+                Detecta a codificação de um arquivo. Essencial para ler corretamente
+                arquivos que podem ter diferentes codificações.
+                """
         with open(filename, 'rb') as f:
             raw_data = f.read(read_size)
             encoding = detect(raw_data).get('encoding', 'utf-8')
@@ -37,6 +41,10 @@ class Command(BaseCommand):
 
     @staticmethod
     def extract_text(tag):
+        """
+                Verifica se uma determinada tag tem texto relevante. Útil para descartar
+                tags que não adicionam informação significativa.
+                """
         if tag.string and tag.string.strip() != "--":
             return True
         if isinstance(tag, Tag):
@@ -47,13 +55,21 @@ class Command(BaseCommand):
 
     @staticmethod
     def extract_scripts_and_styles(html):
+        """
+                Limpa o HTML, removendo tags não desejadas como scripts, styles e noscripts.
+                Isso torna o HTML mais manejável e focado no conteúdo.
+                """
         soup = BeautifulSoup(html, features="html.parser")
         for script in soup(["script", "style", "noscript"]):
             script.extract()
         return soup
 
     def load_html(self, url, file_id, use_cache=False):
-        """Carrega o HTML de uma URL"""
+        """
+        Carrega o HTML de uma URL. Se o caching estiver habilitado, a função
+        primeiro tenta recuperar o conteúdo de um arquivo local em vez de
+        fazer uma nova requisição HTTP.
+        """
 
         html_path = os.path.join(settings.MEDIA_ROOT, 'html')
         os.makedirs(html_path, exist_ok=True)
@@ -98,17 +114,28 @@ class Command(BaseCommand):
         return str(soup)  # Converta o objeto soup de volta para string antes de retornar
 
     def add_arguments(self, parser):
+        """
+                Função auxiliar para adicionar argumentos CLI personalizados a este comando Django.
+                Permite que os usuários especifiquem qual notícia processar ao executar o comando.
+                """
         parser.add_argument('--noticia_id', type=int, help='ID da notícia a ser processada.')
 
     def normalize_text(self, text):
-        """Função para normalizar o texto."""
+        """
+        Limpa e normaliza o texto. Útil para garantir consistência ao comparar
+        strings ou ao armazenar informação.
+        """
         # Removendo caracteres problemáticos ou normalizando-os
         normalized_text = text.replace('“', '"').replace('”', '"').strip()
         normalized_text = normalized_text.replace("&nbsp;", " ").strip()  # Convertendo &nbsp; para espaço
         return normalized_text
 
     def find_parent_with_class(self, tag):
-        """Procura a tag pai mais próxima com o atributo class."""
+        """
+        Para uma determinada tag, esta função procura pelo ancestral (pai, avô, etc.)
+        mais próximo que tem um atributo 'class'. Isso pode ser útil para determinar
+        o contexto ou estilo de uma tag.
+        """
         parent = tag.find_parent()
         while parent:
             if 'class' in parent.attrs:
@@ -117,10 +144,18 @@ class Command(BaseCommand):
         return None
 
     def clean_text(self, text):
-        # Remova espaços extras e retorne a string limpa
+        """
+                Função de utilidade simples que remove espaços extras de um texto.
+                Garante que o texto seja consistente e fácil de comparar.
+                """
         return " ".join(text.split())
 
     def handle(self, *args, **kwargs):
+        """
+                Função principal do comando. Processa notícias (baseado em um ID fornecido ou todas disponíveis),
+                carrega o conteúdo HTML, analisa tags, compara texto das tags com o texto da notícia e
+                cria ou atualiza regras associadas.
+                """
         noticia_id = kwargs.get('noticia_id')
 
         if noticia_id:
