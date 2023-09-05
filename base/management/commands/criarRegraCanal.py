@@ -4,7 +4,9 @@ import pandas as pd
 
 import chardet
 import requests
+import unicodedata
 import urllib3
+import html
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -130,6 +132,46 @@ class Command(BaseCommand):
         normalized_text = normalized_text.replace("&nbsp;", " ").strip()  # Convertendo &nbsp; para espaço
         return normalized_text
 
+    def normalize_and_clean_text(self, text):
+        # Funções de limpeza e normalização combinadas aqui
+        cleaned_text = text.replace('\n', ' ').replace('\r', '').strip()
+        cleaned_text = cleaned_text.replace('“', '"').replace('”', '"').replace("&nbsp;", " ").strip()
+
+        # Decodifica entidades HTML
+        cleaned_text = html.unescape(cleaned_text)
+
+        # Corrigindo codificação
+        try:
+            byte_str = cleaned_text.encode("iso-8859-1")
+            cleaned_text = byte_str.decode("utf-8")
+        except:
+            pass
+
+        # Não remover acentos, apenas normalizar para a forma composta.
+        normalized_text = unicodedata.normalize('NFC', cleaned_text)
+
+        return normalized_text
+
+    def fix_encoding(self, text):
+        # Correções específicas para os caracteres
+        corrections = {
+            "Ã¡": "á", "Ã©": "é", "Ã­": "í", "Ã³": "ó", "Ãº": "ú",
+            "Ã£": "ã", "Ãµ": "õ",
+            "Ã¢": "â", "Ãª": "ê", "Ã®": "î", "Ã´": "ô", "Ã»": "û",
+            "Ã§": "ç",
+            "â€\"": "–", "â€œ": "“", "â€": "”",
+            "Ã„": "Ä", "Ã‹": "Ë", "Ã": "Ï", "Ã–": "Ö", "Ãœ": "Ü",
+            "Ãƒ": "Ã", "Ã•": "Õ",
+            "Ã‚": "Â", "ÃŠ": "Ê", "ÃŽ": "Î", "Ã”": "Ô", "Ã›": "Û",
+            "Ã‡": "Ç",
+            "Ã‰": "É", "Ã": "Í", "Ã“": "Ó", "Ãš": "Ú",
+        }
+
+        for original, corrected in corrections.items():
+            text = text.replace(original, corrected)
+
+        return text
+
     def find_parent_with_class(self, tag):
         """
         Para uma determinada tag, esta função procura pelo ancestral (pai, avô, etc.)
@@ -199,7 +241,9 @@ class Command(BaseCommand):
                 if tag.name in self.EXCLUDED_TAGS:
                     continue
 
-                tag_content = self.clean_text(self.normalize_text(tag.get_text()))
+                #tag_content = self.clean_text(self.normalize_text(tag.get_text()))
+                tag_content = self.normalize_and_clean_text(tag.get_text())
+                tag_content = self.fix_encoding(tag_content)
                 print("Comparando com =====>>>>>>>>>", tag_content)
 
                 if not tag_content:
@@ -229,16 +273,17 @@ class Command(BaseCommand):
                         if similarity > 79:
                             if index < len(df_noticia):
                                 matched_rows = df_noticia.iloc[[index]]
-                        else:
-                            print(f"Similaridade entre '{row['paragrafo']}' e '{tag_content}': {similarity}%")
+                                print(f"Similaridade entre '{row['paragrafo']}' e '{tag_content}': {similarity}%")
+                        # else:
+                        #     print(f"Similaridade entre '{row['paragrafo']}' e '{tag_content}': {similarity}%")
 
                 if matched_rows.shape[0] > 0:
                     df_noticia.loc[matched_rows.index, 'Situacao'] = 1
                     df_noticia.loc[matched_rows.index, 'TextoTag'] = tag_content
                     df_noticia.loc[matched_rows.index, 'TagClass'] = f"Tag: {tag_name}  Class: {tag_class}"
-                else:
-                    print(f"Conteúdo da tag aceita -> '{tag_content}'", f"-- Nome da Tag -> '{tag_name}'",
-                          f"-- Nome da Class -> '{tag_class}'", f"-- Tipo Regra --> '{tipo_regra}'")
+                # else:
+                #     print(f"Conteúdo da tag aceita -> '{tag_content}'", f"-- Nome da Tag -> '{tag_name}'",
+                #           f"-- Nome da Class -> '{tag_class}'", f"-- Tipo Regra --> '{tipo_regra}'")
 
                 # Resetando o índice do DataFrame
                 df_noticia.reset_index(drop=True, inplace=True)
