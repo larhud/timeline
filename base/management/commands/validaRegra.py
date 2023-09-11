@@ -23,6 +23,13 @@ class Command(BaseCommand):
             script.extract()
         return soup
 
+    @staticmethod
+    def tag_is_valid(tag):
+        if tag.string and tag.string.strip():
+            if tag.has_attr('class') or tag.has_attr('id') or tag.has_attr('property'):
+                return True
+        return False
+
     def load_html(self, url, file_id, use_cache=False):
         """Carrega o HTML de uma URL"""
 
@@ -72,26 +79,25 @@ class Command(BaseCommand):
         noticia_id = options.get('noticia_id')
 
         if noticia_id:
-            if not Noticia.objects.filter(id=noticia_id).exists():
+            noticia = Noticia.objects.filter(id=noticia_id).first()
+            if not noticia:
                 print(f'Notícia com ID {noticia_id} não encontrada.')
                 return
-            noticias = [Noticia.objects.get(id=noticia_id)]
+            noticias = [noticia]
         else:
             count_noticias = Noticia.objects.count()
-            if count_noticias > 100:
-                confirm = input(f"Você está prestes a processar {count_noticias} notícias. Continuar? (y/n) ")
-                if confirm.lower() != 'y':
-                    print("Processamento cancelado.")
-                    return
+            if count_noticias > 100 and input(
+                    f"Você está prestes a processar {count_noticias} notícias. Continuar? (y/n) ").lower() != 'y':
+                print("Processamento cancelado.")
+                return
             noticias = Noticia.objects.all()
 
         for noticia in noticias:
             print(f"Processando notícia com ID: {noticia.id}")
-
             domain = urlsplit(noticia.url).netloc
-            try:
-                canal = Canal.objects.get(domain=domain)
-            except Canal.DoesNotExist:
+            canal = Canal.objects.filter(domain=domain).first()
+
+            if not canal:
                 print(f'Canal com domínio {domain} não encontrado. Por favor, adicione-o ao banco de dados.')
                 continue
 
@@ -100,31 +106,42 @@ class Command(BaseCommand):
                 print(f'Nenhuma regra encontrada para o canal: {canal.nome}')
                 continue
 
-            # Carregando o HTML da notícia
             html_content = self.load_html(noticia.url, noticia.id, use_cache=True)
             if not html_content:
                 print("Página sem conteúdo")
                 continue
 
             soup = BeautifulSoup(html_content, 'html.parser')
+            rows = []
 
-            # Criando um DataFrame vazio
-            df = pd.DataFrame(columns=['Id', 'Texto'])
+            # Iterar sobre as tags mencionadas e substituir pela conteúdo de texto
+            for tag_name in ["a", "strong", "b", "i", "span"]:
+                for tag in soup.find_all(tag_name):
+                    tag.replace_with(tag.get_text())
 
             for regra in regras:
-                tag, class_name = eval(regra.regra)
-                selector = f"{tag}.{class_name}"
-                elements = soup.select(selector)
+                tag, attr_value = eval(regra.regra)
 
-                # Criando uma lista temporária para armazenar as linhas
-                rows = [{'Texto': element.get_text(strip=True)} for element in elements]
+                # Tratamento especial para valores de atributo com ':'
+                if ':' in attr_value:
+                    elements = soup.select(f'{tag}[property="{attr_value}"]')
+                else:
+                    elements = soup.select(f"{tag}.{attr_value}")
 
-                # Convertendo a lista temporária em um DataFrame e concatenando com o DataFrame original
-                df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
+                for element in elements:
+                    # Validação adicional conforme requisitos
+                    if element.get_text(strip=True) and (
+                            element.get('class') or element.get('id') or element.get('property')):
+                        rows.append({
+                            'Id': None,
+                            'TextoTag': element.get_text(strip=True),
+                            'TagClass': regra.regra if element.get('class') else regra.regra
+                            # Pegando a primeira classe da lista de classes, se disponível
+                        })
 
+            df = pd.DataFrame(rows)
             df['Id'] = df.index
 
-            # Imprimir o conteúdo do DataFrame
             print("\nConteúdo do DataFrame:")
-            print("-----------------------")
+            print("----------------------")
             print(df.to_string(index=False))

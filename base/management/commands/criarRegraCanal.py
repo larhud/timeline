@@ -172,18 +172,24 @@ class Command(BaseCommand):
 
         return text
 
-    def find_parent_with_class(self, tag):
+    def find_parent_with_attributes(self, tag):
         """
-        Para uma determinada tag, esta função procura pelo ancestral (pai, avô, etc.)
-        mais próximo que tem um atributo 'class'. Isso pode ser útil para determinar
-        o contexto ou estilo de uma tag.
+        Procura pelo ancestral (pai, avô, etc.) mais próximo que tem um atributo 'class' ou 'id' ou 'property'.
         """
+        attributes_order = ['class', 'id', 'property']
+
+        # Verificar o próprio elemento antes de verificar os antepassados
+        for attribute in attributes_order:
+            if attribute in tag.attrs:
+                return tag, attribute
+
         parent = tag.find_parent()
         while parent:
-            if 'class' in parent.attrs:
-                return parent
+            for attribute in attributes_order:
+                if attribute in parent.attrs:
+                    return parent, attribute
             parent = parent.find_parent()
-        return None
+        return None, None
 
     def clean_text(self, text):
         """
@@ -194,10 +200,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         """
-                Função principal do comando. Processa notícias (baseado em um ID fornecido ou todas disponíveis),
-                carrega o conteúdo HTML, analisa tags, compara texto das tags com o texto da notícia e
-                cria ou atualiza regras associadas.
-                """
+        Função principal do comando. Processa notícias (baseado em um ID fornecido ou todas disponíveis),
+        carrega o conteúdo HTML, analisa tags, compara texto das tags com o texto da notícia e
+        cria ou atualiza regras associadas.
+        """
         noticia_id = kwargs.get('noticia_id')
 
         if noticia_id:
@@ -227,8 +233,9 @@ class Command(BaseCommand):
 
             soup = BeautifulSoup(html_content, 'html.parser')
 
-            # Removendo tags <a></a> mas mantendo o texto
-            for a_tag in soup.find_all(['a', 'strong', 'b', 'i']):
+            # Iterando sobre todas as tags <a>, <strong>, <b>, <i> e <span> encontradas no documento HTML
+            for a_tag in soup.find_all(['a', 'strong', 'b', 'i', 'span']):
+                # Substituindo cada uma dessas tags pelo seu respectivo conteúdo de texto.
                 a_tag.replace_with(a_tag.string if a_tag.string else "")
 
             df_noticia = pd.DataFrame(noticia.texto_completo.split('\n'), columns=['paragrafo'])
@@ -241,32 +248,30 @@ class Command(BaseCommand):
                 if tag.name in self.EXCLUDED_TAGS:
                     continue
 
-                #tag_content = self.clean_text(self.normalize_text(tag.get_text()))
                 tag_content = self.normalize_and_clean_text(tag.get_text())
                 tag_content = self.fix_encoding(tag_content)
-                print("Comparando com =====>>>>>>>>>", tag_content)
 
                 if not tag_content:
                     continue
 
-                # Verifica se a tag possui class ou não
-                if 'class' not in tag.attrs or not tag.attrs['class']:
-                    parent_with_class = self.find_parent_with_class(tag)
-                    tag_class = " ".join(parent_with_class.attrs['class']) if parent_with_class else None
-                    tag_name = tag.name if parent_with_class is None else parent_with_class.name
-
-                    # Condicionais para verificar o tipo_regra baseado na Situacao do DataFrame
-                    matched_rows = df_noticia[df_noticia['paragrafo'] == tag_content]
-                    if matched_rows.shape[0] > 0 and matched_rows['Situacao'].iloc[0] == 1:
-                        tipo_regra = 'C'
-                    else:
-                        tipo_regra = 'I'
+                parent_with_attributes, attribute = self.find_parent_with_attributes(tag)
+                if attribute == 'class':
+                    tag_class = " ".join(parent_with_attributes.attrs['class'])
+                elif attribute == 'id':
+                    tag_class = parent_with_attributes.attrs['id']
+                elif attribute == 'property':
+                    tag_class = parent_with_attributes.attrs['property']
                 else:
-                    tag_class = " ".join(tag.attrs.get('class', [])) or None
-                    tag_name = tag.name
-                    tipo_regra = 'I'
+                    tag_class = None
+
+                tag_name = tag.name if parent_with_attributes is None else parent_with_attributes.name
 
                 matched_rows = df_noticia[df_noticia['paragrafo'] == tag_content]
+                if matched_rows.shape[0] > 0 and matched_rows['Situacao'].iloc[0] == 1:
+                    tipo_regra = 'C'
+                else:
+                    tipo_regra = 'I'
+
                 if matched_rows.shape[0] == 0:
                     for index, row in df_noticia.iterrows():
                         similarity = fuzz.partial_ratio(row['paragrafo'], tag_content)
@@ -274,20 +279,29 @@ class Command(BaseCommand):
                             if index < len(df_noticia):
                                 matched_rows = df_noticia.iloc[[index]]
                                 print(f"Similaridade entre '{row['paragrafo']}' e '{tag_content}': {similarity}%")
-                        # else:
-                        #     print(f"Similaridade entre '{row['paragrafo']}' e '{tag_content}': {similarity}%")
 
                 if matched_rows.shape[0] > 0:
                     df_noticia.loc[matched_rows.index, 'Situacao'] = 1
                     df_noticia.loc[matched_rows.index, 'TextoTag'] = tag_content
-                    df_noticia.loc[matched_rows.index, 'TagClass'] = f"Tag: {tag_name}  Class: {tag_class}"
-                # else:
-                #     print(f"Conteúdo da tag aceita -> '{tag_content}'", f"-- Nome da Tag -> '{tag_name}'",
-                #           f"-- Nome da Class -> '{tag_class}'", f"-- Tipo Regra --> '{tipo_regra}'")
+                    df_noticia.loc[
+                        matched_rows.index, 'TagClass'] = f"Tag: {tag_name}  {attribute.capitalize()}: {tag_class}"
 
-                # Resetando o índice do DataFrame
                 df_noticia.reset_index(drop=True, inplace=True)
                 CanalRegra.objects.get_or_create(canal=canal, tipo_regra=tipo_regra,
                                                  regra=json.dumps((tag_name, tag_class)))
 
+            # Cria regras para todas as tags e classes da coluna 'TagClass' com Situacao = 1
+            df_filtered = df_noticia[df_noticia['Situacao'] == 1]
+            for _, row in df_filtered.iterrows():
+                tag_name, tag_class = None, None
+                tag_and_class_info = row['TagClass'].split('  ')
+                if len(tag_and_class_info) == 2:
+                    tag_info, class_info = tag_and_class_info
+                    tag_name = tag_info.split(': ')[1].strip()
+                    tag_class = class_info.split(': ')[1].strip()
+
+                # Aqui garantimos que estamos criando apenas as regras baseadas no DataFrame
+                CanalRegra.objects.get_or_create(canal=canal, tipo_regra='C', regra=json.dumps((tag_name, tag_class)))
+
             print(df_noticia)
+
