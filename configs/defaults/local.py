@@ -4,6 +4,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# $ python -c "import secrets; print(secrets.token_urlsafe())"
 SECRET_KEY = ''
 
 DATABASES = {
@@ -34,4 +35,4 @@ RECAPTCHA_DOMAIN = 'www.recaptcha.net'
 RECAPTCHA_PUBLIC_KEY = ''
 RECAPTCHA_PRIVATE_KEY = ''
 
-SITE_NAME = 'VEPEINFO'
+SITE_NAME = 'Timeline'
