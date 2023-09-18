@@ -77,7 +77,9 @@ class Command(BaseCommand):
         noticia = Noticia.objects.filter(url=url).first()
         parsed_url = urlparse(url)
         domain_full = parsed_url.netloc
+        domain_name = domain_full.split('.')[0]  # Obtém o nome do domínio
 
+        # Verifica se a notícia existe
         if not noticia:
             canal, created = Canal.objects.get_or_create(domain=domain_full)
             if created:
@@ -90,7 +92,7 @@ class Command(BaseCommand):
             print(f'Nenhuma regra encontrada para o canal: {canal.domain}')
             return
 
-        html_content = self.load_html(url, canal.id, use_cache=True)  # Usando canal.id em vez de noticia.id
+        html_content = self.load_html(url, canal.id, use_cache=True)
         if not html_content:
             print("Página sem conteúdo")
             return
@@ -98,28 +100,26 @@ class Command(BaseCommand):
         soup = BeautifulSoup(html_content, 'html.parser')
         rows = []
 
-        for tag_name in ["a", "strong", "b", "i", "span"]:
-            for tag in soup.find_all(tag_name):
-                tag.replace_with(tag.get_text())
-
         for regra in regras:
             tag, attr_value = eval(regra.regra)
-            if ':' in attr_value:
-                elements = soup.select(f'{tag}[property="{attr_value}"]')
-            else:
-                elements = soup.select(f"{tag}.{attr_value}")
 
-            for element in elements:
-                if element.get_text(strip=True) and (
-                        element.get('class') or element.get('id') or element.get('property')):
-                    rows.append({
-                        'Id': None,
-                        'Texto': element.get_text(strip=True)
-                    })
+            # Ajuste na seleção dos elementos
+            if 'property' in attr_value:
+                base_elements = soup.select(f'{tag}[property="{attr_value.split(":")[1]}"]')
+            elif ':' in attr_value:
+                base_elements = soup.select(f'{tag}[{attr_value.split(":")[0]}="{attr_value.split(":")[1]}"]')
+            else:
+                base_elements = soup.select(f"{tag}.{attr_value}")
+
+            for base_element in base_elements:
+                elements = base_element.find_all(True)  # True para buscar todas as tags aninhadas
+                for element in elements:
+                    if element.get_text(strip=True):
+                        rows.append({'Id': None, 'Texto': element.get_text(strip=True)})
 
         df = pd.DataFrame(rows)
         df['Id'] = df.index
 
         print("\nConteúdo do DataFrame:")
         print("----------------------")
-        print(df.to_string(index=False))
+        print(df)
