@@ -13,6 +13,10 @@ import requests
 class Command(BaseCommand):
     help = 'Valida regras para um canal específico'
 
+    HEADERS = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134'
+    }
+
     def add_arguments(self, parser):
         parser.add_argument('--url', type=str, help='URL da Notícia para processamento')
 
@@ -74,18 +78,11 @@ class Command(BaseCommand):
             print("URL não especificada.")
             return
 
-        noticia = Noticia.objects.filter(url=url).first()
         parsed_url = urlparse(url)
         domain_full = parsed_url.netloc
-        domain_name = domain_full.split('.')[0]  # Obtém o nome do domínio
 
-        # Verifica se a notícia existe
-        if not noticia:
-            canal, created = Canal.objects.get_or_create(domain=domain_full)
-            if created:
-                print(f"Canal {canal.nome} criado com sucesso!")
-        else:
-            canal = Canal.objects.filter(domain=domain_full).first()
+        noticia = Noticia.objects.filter(url=url).first()
+        canal = Canal.objects.filter(domain=domain_full).first() or Canal.objects.create(domain=domain_full)
 
         regras = CanalRegra.objects.filter(canal=canal, tipo_regra='C')
         if not regras.exists():
@@ -102,20 +99,31 @@ class Command(BaseCommand):
 
         for regra in regras:
             tag, attr_value = eval(regra.regra)
+            print(f"Processando regra: {tag}, {attr_value}")
 
-            # Ajuste na seleção dos elementos
-            if 'property' in attr_value:
-                base_elements = soup.select(f'{tag}[property="{attr_value.split(":")[1]}"]')
-            elif ':' in attr_value:
-                base_elements = soup.select(f'{tag}[{attr_value.split(":")[0]}="{attr_value.split(":")[1]}"]')
+            # Verificamos se ':' está presente em attr_value
+            if ':' in attr_value:
+                attr_name, attr_val = attr_value.split(':')
+                # Aqui substituímos o nome do atributo incorreto pelo correto
+                attr_name = "property"
+                # E ajustamos o valor do atributo
+                attr_val = f"rnews:{attr_val}"
+                base_elements = soup.select(f"{tag}[{attr_name}='{attr_val}']")
             else:
                 base_elements = soup.select(f"{tag}.{attr_value}")
 
+            if not base_elements:
+                print(
+                    f"Nenhum elemento encontrado para a regra: {tag}, {attr_value}")  # Debug: Imprime se nenhum elemento foi encontrado
+                continue
+
             for base_element in base_elements:
-                elements = base_element.find_all(True)  # True para buscar todas as tags aninhadas
+                elements = base_element.find_all(True)
                 for element in elements:
-                    if element.get_text(strip=True):
-                        rows.append({'Id': None, 'Texto': element.get_text(strip=True)})
+                    texto = element.get_text(strip=True)
+                    if texto:
+                        print(f"Texto encontrado: {texto}")  # Debug: Imprime o texto encontrado
+                        rows.append({'Id': None, 'Texto': texto})
 
         df = pd.DataFrame(rows)
         df['Id'] = df.index
