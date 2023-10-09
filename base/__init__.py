@@ -7,13 +7,11 @@ from django.conf import settings
 # remove all script and style elements from HTML
 # input: html string
 # output: soup object
-def extract_scripts_and_styles(html):
-    soup = BeautifulSoup(html, features="html.parser")
-    for script in soup(["script", "style", "noscript"]):
-        script.extract()
-    return soup
 
 
+
+# obtem o HTML retirado da URL e retorna um soup object
+# se use_cache=False, a rotina irá buscar da URL original mesmo que já exista um cache
 # obtem o HTML retirado da URL e retorna um soup object
 # se use_cache=False, a rotina irá buscar da URL original mesmo que já exista um cache
 def load_html(url, file_id, use_cache=False):

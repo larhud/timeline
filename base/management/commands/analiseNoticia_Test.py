@@ -31,7 +31,7 @@ class Command(BaseCommand):
             f"Canal '{canal.domain}' {'criado' if created else 'já existe'}")  # Exibe se o canal foi criado ou já existia
 
         # fazer o request para a url e obter o conteúdo
-        print("Fazendo request para a URL da notícia...")
+        print("***** Fazendo request para a URL da notícia *****")
         response = requests.get(url)
         soup = BeautifulSoup(response.content, 'html.parser')
 
