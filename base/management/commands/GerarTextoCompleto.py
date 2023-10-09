@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlsplit, urlparse
 from base.models import Canal, CanalRegra, Noticia
 from django.conf import settings
-from datetime import date
 
 import pandas as pd
 import os
@@ -132,28 +131,3 @@ class Command(BaseCommand):
         print("\nConteúdo do DataFrame:")
         print("----------------------")
         print(df)
-
-        # Extrai o título a partir do primeiro parágrafo até o primeiro ponto final encontrado
-        primeiro_paragrafo = df['Texto'].iloc[0] if not df.empty else ""  # Pega o primeiro parágrafo, se houver
-        titulo = primeiro_paragrafo.split('.', 1)[0] if '.' in primeiro_paragrafo else primeiro_paragrafo
-
-        # Concatena todos os textos em uma única string
-        texto_concatenado = ' '.join(df['Texto'])
-
-        # Verifica se a notícia já existe
-        if noticia:
-            noticia.titulo = titulo  # Define o título
-            noticia.texto_completo = texto_concatenado
-            noticia.save()
-            print("Notícia atualizada com sucesso!")
-        else:
-            # Se não, cria uma nova notícia
-            noticia = Noticia(
-                url=url,
-                titulo=titulo,  # Define o título aqui
-                texto_completo=texto_concatenado,
-                dt=date.today()  # Define a data atual
-            )
-            noticia.save()
-            print("Notícia criada com sucesso!")
-

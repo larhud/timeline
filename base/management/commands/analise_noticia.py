@@ -109,42 +109,13 @@ class Command(BaseCommand):
         },
         "www.ans.gov.br": {
             "accepted_tags": {
-                'div': ["page-header", "col-xs-12 col-sm-8 col-md-9"],
-                'h1': ["titulo-pagina"],
-                'p': ["data-noticia", "credito-noticia"]
+                'div': ["page-header", "col-xs-12 col-sm-8 col-md-9"]
             },
             "ignored_tags": {
                 'script': ["text/javascript SETTINGS", "text/javascript", "application/json", "text/javascript CDA_AAS",
                            None],
-                'div': ["views-field views-field-nothing-1", "field-item even"],
+                'div': ["rodape-mapa-site-ans", "boxcinza-ans"],
                 'p': ["muted"]
-            }
-        },
-        "portal.fiocruz.br": {
-            "accepted_tags": {
-                'div': ["field-item even"],
-                'p': ["data-noticia", "credito-noticia"],
-                'h1': ["titulo-pagina"]
-            },
-            "ignored_tags": {
-                'script': ["text/javascript SETTINGS", "text/javascript", "application/json", "text/javascript CDA_AAS",
-                           None],
-                'div': ["bloco_lado_gal bg_ampliado",
-                        "view view-compartilhamento view-id-compartilhamento view-display-id-bloco_compartilhamento bloco-compartilhamento view-dom-id-33ae1b450e42ed027cff40ad9a3a2494"]
-            }
-        },
-        "www.diariodepernambuco.com.br": {
-            "accepted_tags": {
-                'div': ["items_noticia", "d-block"],
-                'p': ["d-inline", "data-noticia", "credito-noticia"],
-                'h1': ["mb-3"],
-            },
-            "ignored_tags": {
-                'script': ["text/javascript SETTINGS", "text/javascript", "application/json", "text/javascript CDA_AAS",
-                           None],
-                'td': ["zebra"],
-                'div': ["bloco_lado_gal bg_ampliado",
-                        "view view-compartilhamento view-id-compartilhamento view-display-id-bloco_compartilhamento bloco-compartilhamento view-dom-id-33ae1b450e42ed027cff40ad9a3a2494"]
             }
         },
         # outros domínios...

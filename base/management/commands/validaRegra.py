@@ -12,9 +12,6 @@ import requests
 
 class Command(BaseCommand):
     help = 'Valida regras para um canal específico'
-    HEADERS = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134'
-    }
 
     def add_arguments(self, parser):
         parser.add_argument('--noticia_id', type=int, help='ID da Notícia (opcional)')
