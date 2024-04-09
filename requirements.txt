@@ -1,6 +1,4 @@
 Django<4
-mysqlclient
-gunicorn
 -r powercms/requirements.txt
 lxml
 serializers
