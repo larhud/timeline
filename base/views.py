@@ -424,12 +424,16 @@ def arquivo_csv(request):
     dataset = Noticia.objects.pesquisa(**form.cleaned_data)
 
     csv_file = 'dt;titulo;texto;texto_completo;url;media;fonte\n'
-    for noticia in dataset:
+    for noticia in dataset.filter(visivel=True):
+        if noticia.texto_completo:
+            texto = noticia.texto_completo.replace('"', '')
+        else:
+            texto = ''
         csv_file += '%s;"%s";"%s";"%s";"%s";"%s";"%s"\n' % (
             noticia.dt.strftime('%d/%m/%Y'),
             noticia.titulo,
             noticia.texto,
-            noticia.texto_completo.replace('"', ''),
+            texto,
             noticia.url,
             noticia.media,
             noticia.fonte,
