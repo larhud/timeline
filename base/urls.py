@@ -19,5 +19,5 @@ urlpatterns = [
     path('lista-de-fontes/<int:termo>', views.lista_de_fontes, name='lista_de_fontes'),
     path('lista-de-termos/', views.lista_de_termos, name='lista_de_termos'),
     path('novo-contato/', views.novo_contato, name='novo_contato'),
-    path('quebra<int:id>', views.quebra_termo, name='quebra_termo')
+    path('ccloud/<int:id_noticia>', views.chrono_cloud, name='chrono_cloud')
 ]

@@ -4,8 +4,6 @@
 
 {% block termo_descricao %}
   <h1 style="margin-top: -10px;">Timeline {{ object|capfirst }}</h1>
-  <a href="/timeline/covid?tab=1" id="btn-metodologia" class="btn btn-primary">Metodologia</a>
-  <a href="/timeline/covid?tab=2" id="btn-nuvem-cronologica" class="btn btn-primary">Nuvem cronológica</a>
   <p>{{ object.texto_explicativo|safe }}</p>
 {% endblock %}
 
