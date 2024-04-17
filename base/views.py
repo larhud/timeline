@@ -136,10 +136,10 @@ def nuvem_de_palavras(request):
         nuvens = crono[2:]
         if nuvens:
             for nuvem in nuvens:
-                counter[nuvem[0]] += nuvem[1]   
+                counter[nuvem[0]] += nuvem[1]
 
     nuvem = [{'text': i[0], 'weight': i[1]}
-             for i in counter.most_common(40)]
+             for i in counter.most_common(60)]
 
     context['wordcloud'] = nuvem
 
