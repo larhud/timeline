@@ -29,6 +29,7 @@ from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
 from base.management.commands.get_text import extract_text, load_html
 from powercms.crm.models import Contato
 from timeline.settings import noticia_imagem_path
+from django.db.models import Count
 
 
 class TimeLinePorTermo(DetailView):
@@ -142,6 +143,34 @@ def nuvem_de_palavras(request):
              for i in counter.most_common(60)]
 
     context['wordcloud'] = nuvem
+
+    return JsonResponse(context, safe=False)
+
+
+def daily_statistics(request):
+    form = FormBuscaTimeLine(data=request.GET)
+    form.is_valid()
+    noticias = Noticia.objects.pesquisa(**form.cleaned_data)
+    context = {
+        'total': 0,
+        'x': [],
+        'y': []
+    }
+
+    if not noticias:
+        return JsonResponse([], safe=False)
+
+    x = []
+    y = []
+    total = 0
+    for r in noticias.values('dt').annotate(count=Count('id')):
+        x.append(r['dt'])
+        y.append(r['count'])
+        total += r['count']
+
+    context['total'] = total
+    context['x'] = x
+    context['y'] = y
 
     return JsonResponse(context, safe=False)
 

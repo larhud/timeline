@@ -2,7 +2,8 @@ from django.urls import path
 from . import views, api
 
 urlpatterns = [
-    path('timeline/<slug:slug>/', views.TimeLinePorTermo.as_view(), name='timeline_por_termo'),
+    path('timeline/<slug:slug>/', views.TimeLinePorTermo.as_view(),
+         name='timeline_por_termo'),
     path('mensagem/', views.ContatoView.as_view(), name='mensagem'),
     path('get_pdf/<int:id>', views.get_pdf, name='get_pdf'),
     path('upload_pdf/<int:id>', views.upload_pdf, name='upload_pdf'),
@@ -14,9 +15,11 @@ urlpatterns = [
     path('pesquisa/', views.pesquisa, name='pesquisa'),
     path('filtro_data/', views.filtro, name='filtro'),
     path('nuvem-de-palavras/', views.nuvem_de_palavras, name='nuvem_de_palavras'),
+    path('daily-statistics/', views.daily_statistics, name='daily_statistics'),
     path('arquivo_json/', views.arquivo_csv, name='arquivo_csv'),
     path('arquivotm/', api.arquivoTM),
-    path('lista-de-fontes/<int:termo>', views.lista_de_fontes, name='lista_de_fontes'),
+    path('lista-de-fontes/<int:termo>',
+         views.lista_de_fontes, name='lista_de_fontes'),
     path('lista-de-termos/', views.lista_de_termos, name='lista_de_termos'),
     path('novo-contato/', views.novo_contato, name='novo_contato'),
     path('ccloud/<int:id_noticia>', views.chrono_cloud, name='chrono_cloud')
