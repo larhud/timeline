@@ -23,7 +23,6 @@ easy-thumbnails==2.8.3
 httplib2==0.20.4
 idna==3.4
 
-Pillow==9.5.0
 protobuf==4.21.7
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
@@ -43,4 +42,4 @@ webencodings==0.5.1
 django-recaptcha==3.0.0
 django-compressor==4.3.1
 django-crispy-forms==2.0
-poweradmin @ git+https://bitbucket.org/josir/poweradmin.git@django32
+poweradmin @ git+https://bitbucket.org/josir/poweradmin.git@django322
