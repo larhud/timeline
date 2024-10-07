@@ -1,3 +1,5 @@
+import ast
+from collections import Counter
 import csv
 import hashlib
 import os
@@ -36,11 +38,112 @@ class TimeLinePorTermo(DetailView):
     slug_field = 'slug'
 
 
+def build_crono_cloud(noticias_termo, n_slot=15):
+    if not noticias_termo:
+        return []
+
+    latest_dt = noticias_termo.latest('dt').dt
+    earliest_dt = noticias_termo.earliest('dt').dt
+
+    periodo = latest_dt - earliest_dt
+    tam_slot = periodo / n_slot
+
+    l_slots = []  # lista com a data do inicio e fim de cada slot
+    for i in range(0, n_slot, 1):
+        l_slots.append([earliest_dt+((i)*tam_slot),
+                        earliest_dt+((i+1)*tam_slot) - timedelta(days=1)])
+
+    l_nuvem = []  # lista da nuvem de palavras de cada slot
+    for i in range(0, n_slot, 1):
+        counter = Counter()
+        noticias = noticias_termo.pesquisa(
+            datafiltro=l_slots[i]).values('nuvem')
+        for noticia in noticias:
+            if noticia.get('nuvem'):
+                nuvem = ast.literal_eval(noticia.get('nuvem'))
+                for termo in nuvem:
+                    counter[termo[0]] += termo[1]
+
+        l_nuvem.append(counter.most_common(40))
+
+    n_palavras = 10
+    # lista de slots e suas respectivas nuvems(n_palavras mais acessadas)
+    l_result = []
+    for i in range(0, n_slot, 1):
+        var = l_slots[i]
+        var[0] = datetime.strftime(var[0], '%d/%m/%Y')
+        var[1] = datetime.strftime(var[1], '%d/%m/%Y')
+        l_result.append(var)
+        for j in range(0, n_palavras, 1):
+            if len(l_nuvem[i]) == 0:  # Caso nao hajam noticias no slot
+                j += 1
+            else:
+                l_result[i].append(l_nuvem[i][j])
+
+    return l_result
+
+
+def build_crono_cloud_table(cronocloud, n_slot):
+    rows = {'rows': []}
+    header = ['Dt Inicial', 'Dt Final', 'Termos']
+
+    t_list = []
+    for i in range(0, n_slot, 1):
+        t_list.append([])
+
+    n_palavras = 10
+    for i in range(0, n_slot, 1):
+        for j in range(2, (n_palavras+2), 1):  # 10 palavras
+            # caso onde a l_result(slot) tem apenas as datas e nao tem noticias
+            if len(cronocloud[i]) <= 2:
+                j += 1
+            else:
+                t_list[i].append(cronocloud[i][j][0])
+
+        rows['rows'].append({
+            'dt_inicial': cronocloud[i][0],
+            'dt_final': cronocloud[i][1],
+            'termos': t_list[i],
+        })
+
+    context = {
+        'header': header,
+        'rows': rows['rows'],
+    }
+    return context
+
+
 def nuvem_de_palavras(request):
     form = FormBuscaTimeLine(data=request.GET)
     form.is_valid()
-    nuvem = [{'text': i[0], 'weight': i[1]} for i in Noticia.objects.pesquisa(**form.cleaned_data).nuvem()]
-    return JsonResponse(nuvem, safe=False)
+    n_slot = 15
+
+    context = {
+        'wordcloud': [],
+        'cronocloud': {}
+    }
+
+    noticias = Noticia.objects.pesquisa(**form.cleaned_data)
+    if not noticias:
+        return JsonResponse(context, safe=False)
+
+    cronocloud = build_crono_cloud(noticias, n_slot)
+    context_crono_cloud = build_crono_cloud_table(cronocloud, n_slot)
+    context['cronocloud'] = context_crono_cloud
+
+    counter = Counter()
+    for crono in cronocloud:
+        nuvens = crono[2:]
+        if nuvens:
+            for nuvem in nuvens:
+                counter[nuvem[0]] += nuvem[1]
+
+    nuvem = [{'text': i[0], 'weight': i[1]}
+             for i in counter.most_common(60)]
+
+    context['wordcloud'] = nuvem
+
+    return JsonResponse(context, safe=False)
 
 
 class ContatoView(TemplateView):
@@ -105,8 +208,10 @@ def api_arquivopt(request):
 
                     try:
                         url = k['linkToNoFrame']
-                        url_hash = hashlib.sha256(url.encode('utf-8')).hexdigest()
-                        titulo = BeautifulSoup(k['title'], features="lxml").text
+                        url_hash = hashlib.sha256(
+                            url.encode('utf-8')).hexdigest()
+                        titulo = BeautifulSoup(
+                            k['title'], features="lxml").text
                         noticia = Noticia.objects.get(url_hash=url_hash)
                         if not noticia.revisado:
                             noticia.titulo = titulo
@@ -126,7 +231,8 @@ def api_arquivopt(request):
                     tot_gravados += 1
 
         messages.info(request, f'{tot_lidos} registros lidos')
-        messages.info(request, f'{tot_gravados} registros importados com sucesso')
+        messages.info(
+            request, f'{tot_gravados} registros importados com sucesso')
 
     context = {
         'form': form,
@@ -156,7 +262,8 @@ def importacaoCSV(request):
                 print(tot_linhas)
                 url = linha['Media Caption'].split('#')[0]
                 if len(url) > URL_MAX_LENGTH:
-                    erros.append('Tamanho da URL inválido - linha(%d)' % tot_linhas)
+                    erros.append(
+                        'Tamanho da URL inválido - linha(%d)' % tot_linhas)
                     continue
 
                 if not url:
@@ -166,7 +273,8 @@ def importacaoCSV(request):
                 try:
                     id_externo = int(linha['ID'])
                 except:
-                    erros.append('ID em branco ou não numérico - linha (%d)' % tot_linhas)
+                    erros.append(
+                        'ID em branco ou não numérico - linha (%d)' % tot_linhas)
                     continue
 
                 try:
@@ -175,7 +283,8 @@ def importacaoCSV(request):
                     dia = linha['Day']
                     dt = datetime.strptime(f"{ano}-{mes}-{dia}", "%Y-%m-%d")
                 except ValueError:
-                    erros.append(f'Erro ao converter data (linha {tot_linhas})')
+                    erros.append(
+                        f'Erro ao converter data (linha {tot_linhas})')
                     continue
 
                 url_hash = hashlib.sha256(url.encode('utf-8')).hexdigest()
@@ -183,8 +292,10 @@ def importacaoCSV(request):
                 titulo = linha['Headline']
 
                 try:
-                    noticia = Noticia.objects.get(id_externo=id_externo, assunto__termo=termo)
-                    assunto = noticia.assunto_set.filter(termo=termo, noticia=noticia)
+                    noticia = Noticia.objects.get(
+                        id_externo=id_externo, assunto__termo=termo)
+                    assunto = noticia.assunto_set.filter(
+                        termo=termo, noticia=noticia)
                     found = assunto.count() == 1
                 except Noticia.DoesNotExist:
                     found = False
@@ -204,11 +315,15 @@ def importacaoCSV(request):
 
                         # Verifica se não existe alguma outra URL igual
                         # Se houver e for do mesmo conjunto, indicar o erro
-                        dup = Noticia.objects.filter(url_hash=url_hash).exclude(id_externo=id_externo)
+                        dup = Noticia.objects.filter(
+                            url_hash=url_hash).exclude(id_externo=id_externo)
                         if dup:
-                            erros.append('URL Duplicada: %s (linha %d)' % (url, tot_linhas))
-                            temp_hash = hashlib.sha256(str(dup[0].id).encode('utf-8')).hexdigest()
-                            dup.update(url_hash=temp_hash, texto_busca='URL duplicada')
+                            erros.append(
+                                'URL Duplicada: %s (linha %d)' % (url, tot_linhas))
+                            temp_hash = hashlib.sha256(
+                                str(dup[0].id).encode('utf-8')).hexdigest()
+                            dup.update(url_hash=temp_hash,
+                                       texto_busca='URL duplicada')
 
                 else:
                     try:
@@ -230,7 +345,8 @@ def importacaoCSV(request):
                             noticia.imagem = None
                         noticia.media = linha['Media']
                     else:
-                        erros.append('URL da imagem inválida (id_externo %d)' % id_externo)
+                        erros.append(
+                            'URL da imagem inválida (id_externo %d)' % id_externo)
                     noticia.fonte = linha['Media Credit']
 
                     if len(linha['Texto completo raspado']) > 0 and not noticia.revisado:
@@ -241,14 +357,17 @@ def importacaoCSV(request):
                     # se já houver assunto cadastrado para esse termo, atualiza o id_externo
                     # senão cria um novo
                     try:
-                        assunto = Assunto.objects.get(noticia=noticia, termo=termo)
+                        assunto = Assunto.objects.get(
+                            noticia=noticia, termo=termo)
                         assunto.id_externo = id_externo
                         assunto.save()
                     except Assunto.DoesNotExist:
-                        Assunto.objects.create(termo=termo, noticia=noticia, id_externo=id_externo)
+                        Assunto.objects.create(
+                            termo=termo, noticia=noticia, id_externo=id_externo)
 
                 except Exception as e:
-                    erros.append('Erro desconhecido na URL: %s (linha %d)' % (url, tot_linhas))
+                    erros.append(
+                        'Erro desconhecido na URL: %s (linha %d)' % (url, tot_linhas))
                     erros.append(e.__str__())
                     continue
 
@@ -328,7 +447,8 @@ def scrap_text(request, id):
         noticia.atualizado = True
         noticia.save()
     else:
-        messages.info(request, 'Não foi possível carregar a URL. Realize a carga manual')
+        messages.info(
+            request, 'Não foi possível carregar a URL. Realize a carga manual')
         noticia.url_valida = False
         noticia.atualizado = False
         noticia.save()
@@ -345,7 +465,8 @@ def scrap_image(request, id):
         noticia.save()
         messages.info(request, 'Imagem validada e armazenada')
     else:
-        messages.error(request, 'Não foi possível carregar a imagem. Verifique a URL da imagem')
+        messages.error(
+            request, 'Não foi possível carregar a imagem. Verifique a URL da imagem')
 
     return redirect(reverse('admin:base_noticia_change', args=(id,)))
 
@@ -491,7 +612,8 @@ def lista_de_fontes(request, termo):
 
 
 def lista_de_termos(request):
-    queryset = Termo.objects.filter(visivel=True).order_by(request.GET.get('order_by', 'pk'))
+    queryset = Termo.objects.filter(visivel=True).order_by(
+        request.GET.get('order_by', 'pk'))
     pagina = request.GET.get('pageNumber', 1)
     paginator = Paginator(queryset, request.GET.get('pageSize', 4))
 
@@ -536,8 +658,8 @@ def chrono_cloud(request, id_noticia):
     n_slot = 15
     result = nuvem_cronologica(id_noticia, n_slot)
 
-    header = {'header':['Dt Inicial', 'Dt Final', 'Termos']}
-    rows = { 'rows': []}
+    header = {'header': ['Dt Inicial', 'Dt Final', 'Termos']}
+    rows = {'rows': []}
 
     t_list = []
     for i in range(0, n_slot, 1):
@@ -545,8 +667,9 @@ def chrono_cloud(request, id_noticia):
 
     n_palavras = 10
     for i in range(0, n_slot, 1):
-        for j in range(2, (n_palavras+2), 1): # 10 palavras
-            if len(result[i]) <= 2: # caso onde a l_result(slot) tem apenas as datas e nao tem noticias
+        for j in range(2, (n_palavras+2), 1):  # 10 palavras
+            # caso onde a l_result(slot) tem apenas as datas e nao tem noticias
+            if len(result[i]) <= 2:
                 j += 1
             else:
                 t_list[i].append(result[i][j][0])
@@ -555,7 +678,7 @@ def chrono_cloud(request, id_noticia):
             'dt_inicial': result[i][0],
             'dt_final': result[i][1],
             'termos': t_list[i],
-            })
+        })
 
     context = {
         'header': header['header'],
@@ -574,24 +697,34 @@ def nuvem_cronologica(id, n_slot):
     periodo = latest_dt - earliest_dt
     tam_slot = periodo / n_slot
 
-    l_slots = []                                          #lista com a data do inicio e fim de cada slot
+    l_slots = []  # lista com a data do inicio e fim de cada slot
     for i in range(0, n_slot, 1):
         l_slots.append([earliest_dt+((i)*tam_slot),
                         earliest_dt+((i+1)*tam_slot) - timedelta(days=1)])
 
-    l_nuvem = []                                          #lista da nuvem de palavras de cada slot
+    l_nuvem = []  # lista da nuvem de palavras de cada slot
     for i in range(0, n_slot, 1):
-        l_nuvem.append(noticias_termo.pesquisa(datafiltro=l_slots[i]).nuvem())
+        counter = Counter()
+        noticias = noticias_termo.pesquisa(
+            datafiltro=l_slots[i]).values('nuvem')
+        for noticia in noticias:
+            if noticia.get('nuvem'):
+                nuvem = ast.literal_eval(noticia.get('nuvem'))
+                for termo in nuvem:
+                    counter[termo[0]] += termo[1]
+
+        l_nuvem.append(counter.most_common(40))
 
     n_palavras = 10
-    l_result = []                        #lista de slots e suas respectivas nuvems(n_palavras mais acessadas)
+    # lista de slots e suas respectivas nuvems(n_palavras mais acessadas)
+    l_result = []
     for i in range(0, n_slot, 1):
         var = l_slots[i]
         var[0] = datetime.strftime(var[0], '%d/%m/%Y')
         var[1] = datetime.strftime(var[1], '%d/%m/%Y')
         l_result.append(var)
         for j in range(0, n_palavras, 1):
-            if len(l_nuvem[i]) == 0:      #Caso nao hajam noticias no slot
+            if len(l_nuvem[i]) == 0:  # Caso nao hajam noticias no slot
                 j += 1
             else:
                 l_result[i].append(l_nuvem[i][j])
