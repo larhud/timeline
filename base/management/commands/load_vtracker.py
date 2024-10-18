@@ -58,15 +58,18 @@ class Command(BaseCommand):
             noticia = Noticia.objects.filter(url_hash=url_hash).first()
             if not noticia:
                 noticia = Noticia(dt=dt, titulo=titulo, url=url, fonte=fonte, url_valida=False,
-                                  id_externo=tot_lidos, origem=1)
+                                  id_externo=tot_lidos, origem=1, revisado=True)
+
             noticia.texto = line['texto'].strip()
             noticia.texto_completo = line['texto'].strip()
             noticia.atualizado = True
             noticia.visivel = True
-            noticia.revisado = True
             noticia.save()
             assunto = Assunto(termo=timeline, noticia=noticia, id_externo=tot_lidos)
             assunto.save()
+
+            if noticia.revisado:
+                continue
 
             # Validando a URL
             hostname = noticia.url.split("//")[-1].split("/")[0].split('?')[0]
@@ -74,20 +77,24 @@ class Command(BaseCommand):
 
             # Testa se a URL existe
             try:
-                soup = load_html(noticia.url, timeout, True)
+                imagem_ok = False
+                soup = load_html(noticia.url, noticia.id, True, timeout)
                 if soup:
-                    if not noticia.imagem:
-                        imagem_url = scrap_best_image(soup)
-                        if imagem_url:
-                            file_path = save_image(imagem_url, img_path, noticia.id)
-                            if file_path:
-                                tot_scrap += 1
-                                noticia.imagem = file_path
-                        else:
-                            noticia.notas = '[Imagem não recuperada]'
-                            noticia.imagem = '/static/site/img/logo.png'
                     noticia.url_valida = True
+                    imagem_url = scrap_best_image(soup)
+                    if imagem_url:
+                        file_path = save_image(imagem_url, img_path, noticia.id)
+                        if file_path:
+                            tot_scrap += 1
+                            noticia.imagem = file_path
+                            noticia.notas = None
+                            imagem_ok = True
 
+                if not imagem_ok:
+                    noticia.notas = '[Imagem não recuperada]'
+                    noticia.imagem = '/static/site/img/logo.png'
+
+                noticia.revisada = True
                 noticia.save()
 
             except Exception as e:

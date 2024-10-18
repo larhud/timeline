@@ -16,7 +16,7 @@ def extract_scripts_and_styles(html):
 
 # obtem o HTML a partir da URL e retorna um soup object
 # se use_cache=False, a rotina irá buscar da URL original mesmo que já exista um cache
-def load_html(url, file_id, use_cache=False):
+def load_html(url, file_id, use_cache=False, timeout=10):
     html_path = os.path.join(settings.MEDIA_ROOT, 'html')
     if use_cache:
         filename = f"{html_path}/{file_id}.html"
@@ -30,7 +30,7 @@ def load_html(url, file_id, use_cache=False):
     try:
         headers = {'user-agent':
                    'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=timeout)
         if response.status_code == 200:
             soup = extract_scripts_and_styles(response.content)
             if soup and not use_cache:

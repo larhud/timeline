@@ -17,7 +17,7 @@ class Termo(models.Model):
     imagem = models.ImageField(upload_to='uploads', null=True, blank=True)
     visivel = models.BooleanField('Visível', default=True)
     num_reads = models.BigIntegerField('Núm.Acessos', default=0)
-    # stopwords = models.TextField(null=True, blank=True)
+    stopwords = models.TextField(null=True, blank=True)
 
     class Meta:
         verbose_name = 'Timeline'
