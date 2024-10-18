@@ -102,13 +102,13 @@ class NoticiaAdmin(PowerModelAdmin):
             )
         return super(NoticiaAdmin, self).get_fieldsets(request, obj)
 
-    def get_form(self, request, obj=None, **kwargs):
-        if obj is None:
-            self.form = NoticiaFormAdd
-            kwargs['fields'] = ['url', ]
-        else:
-            self.form = NoticiaEdit
-        return super(NoticiaAdmin, self).get_form(request, obj, **kwargs)
+    #def get_form(self, request, obj=None, **kwargs):
+    #    if obj is None:
+    #        self.form = NoticiaFormAdd
+    #        kwargs['fields'] = ['url', ]
+    #    else:
+    #        self.form = NoticiaEdit
+    #    return super(NoticiaAdmin, self).get_form(request, obj, **kwargs)
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
 

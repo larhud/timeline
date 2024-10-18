@@ -16,8 +16,8 @@ class Termo(models.Model):
     slug = models.CharField(max_length=60, null=True)
     imagem = models.ImageField(upload_to='uploads', null=True, blank=True)
     visivel = models.BooleanField('Visível', default=True)
-
     num_reads = models.BigIntegerField('Núm.Acessos', default=0)
+    # stopwords = models.TextField(null=True, blank=True)
 
     class Meta:
         verbose_name = 'Timeline'
@@ -141,9 +141,8 @@ class Noticia(models.Model):
         if not self.url_hash:
             self.url_hash = hashlib.sha256(self.url.encode('utf-8')).hexdigest()
 
-        if not self.revisado:
-            if not self.url_valida and not self.pdf_atualizado:
-                self.url_valida = test_url(self.url)
+        if not self.revisado and self.url_valida is None:
+            self.url_valida = test_url(self.url)
 
         if 'form' in kwargs:
             form = kwargs['form']

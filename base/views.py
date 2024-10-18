@@ -23,7 +23,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.views.generic import DetailView, TemplateView
 
-from base import save_image
+from base import save_image, scrap_best_image
 from base.forms import FormImportacaoCSV, IntervaloNoticias, BuscaArquivoPT, FormBuscaTimeLine, ContatoForm
 from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
 from base.management.commands.get_text import extract_text, load_html
@@ -39,6 +39,7 @@ class TimeLinePorTermo(DetailView):
     slug_field = 'slug'
 
 
+# noticia_termo: Dataset com as notícias que farão parte da nuvem
 def build_crono_cloud(noticias_termo, n_slot=15):
     if not noticias_termo:
         return []
@@ -49,67 +50,75 @@ def build_crono_cloud(noticias_termo, n_slot=15):
     periodo = latest_dt - earliest_dt
     tam_slot = periodo / n_slot
 
-    l_slots = []  # lista com a data do inicio e fim de cada slot
+    # divide o periodo em "n" slots com a data do inicio e fim de cada slot
+    l_slots = []
     for i in range(0, n_slot, 1):
-        l_slots.append([earliest_dt+((i)*tam_slot),
-                        earliest_dt+((i+1)*tam_slot) - timedelta(days=1)])
+        dt_inicial = earliest_dt + i*tam_slot
+        dt_final = earliest_dt+(i+1)*tam_slot - timedelta(days=1)
+        if dt_final >= dt_inicial:
+            l_slots.append([dt_inicial, dt_final])
 
-    l_nuvem = []  # lista da nuvem de palavras de cada slot
-    for i in range(0, n_slot, 1):
+    n_slot = len(l_slots)
+    counter_todos = Counter()
+    for index in range(0, n_slot, 1):
         counter = Counter()
-        noticias = noticias_termo.pesquisa(
-            datafiltro=l_slots[i]).values('nuvem')
+        noticias = noticias_termo.pesquisa(datafiltro=l_slots[index]).values('nuvem')
         for noticia in noticias:
             if noticia.get('nuvem'):
                 nuvem = ast.literal_eval(noticia.get('nuvem'))
                 for termo in nuvem:
                     counter[termo[0]] += termo[1]
 
-        l_nuvem.append(counter.most_common(40))
+        nuvem = counter.most_common(20)
+        for palavra in nuvem:
+            counter_todos[palavra[0]] += 1
 
-    n_palavras = 10
-    # lista de slots e suas respectivas nuvems(n_palavras mais acessadas)
+        l_slots[index].append(nuvem)
+
+    # Remove os dias sem nuvem
+    l_slots = [slot for slot in l_slots if len(slot[2]) > 0]
+
+    # Contabiliza os termos que aparecem em todas as nuvens
+    unanimes = []
+    for palavra, count in counter_todos.items():
+        if count == len(l_slots):
+            unanimes.append(palavra)
+
+    # remove os que aparecem em todas as listas
+    if len(unanimes) > 0:
+        for slot in l_slots:
+            for palavra, count in slot[2]:
+                if palavra in unanimes:
+                    del slot[2][palavra]
+
     l_result = []
-    for i in range(0, n_slot, 1):
-        var = l_slots[i]
-        var[0] = datetime.strftime(var[0], '%d/%m/%Y')
-        var[1] = datetime.strftime(var[1], '%d/%m/%Y')
-        l_result.append(var)
-        for j in range(0, n_palavras, 1):
-            if len(l_nuvem[i]) == 0:  # Caso nao hajam noticias no slot
-                j += 1
-            else:
-                l_result[i].append(l_nuvem[i][j])
+    for item in l_slots:
+        item[0] = datetime.strftime(item[0], '%d/%m/%Y')
+        item[1] = datetime.strftime(item[1], '%d/%m/%Y')
+        if len(item[2]) > 0:
+            l_result.append(item)
 
     return l_result
 
 
-def build_crono_cloud_table(cronocloud, n_slot):
-    rows = {'rows': []}
+def build_crono_cloud_table(cronocloud):
     header = ['Dt Inicial', 'Dt Final', 'Termos']
 
-    t_list = []
-    for i in range(0, n_slot, 1):
-        t_list.append([])
+    rows = []
+    for slot in cronocloud:
+        termos = []
+        for termo in slot[2][:10]:
+            termos.append(termo[0])
 
-    n_palavras = 10
-    for i in range(0, n_slot, 1):
-        for j in range(2, (n_palavras+2), 1):  # 10 palavras
-            # caso onde a l_result(slot) tem apenas as datas e nao tem noticias
-            if len(cronocloud[i]) <= 2:
-                j += 1
-            else:
-                t_list[i].append(cronocloud[i][j][0])
-
-        rows['rows'].append({
-            'dt_inicial': cronocloud[i][0],
-            'dt_final': cronocloud[i][1],
-            'termos': t_list[i],
+        rows.append({
+            'dt_inicial': slot[0],
+            'dt_final': slot[1],
+            'termos': termos
         })
 
     context = {
         'header': header,
-        'rows': rows['rows'],
+        'rows': rows,
     }
     return context
 
@@ -129,15 +138,13 @@ def nuvem_de_palavras(request):
         return JsonResponse(context, safe=False)
 
     cronocloud = build_crono_cloud(noticias, n_slot)
-    context_crono_cloud = build_crono_cloud_table(cronocloud, n_slot)
+    context_crono_cloud = build_crono_cloud_table(cronocloud)
     context['cronocloud'] = context_crono_cloud
 
     counter = Counter()
     for crono in cronocloud:
-        nuvens = crono[2:]
-        if nuvens:
-            for nuvem in nuvens:
-                counter[nuvem[0]] += nuvem[1]
+        for item in crono[2]:
+            counter[item[0]] = item[1]
 
     nuvem = [{'text': i[0], 'weight': i[1]}
              for i in counter.most_common(60)]
@@ -487,15 +494,28 @@ def scrap_text(request, id):
 
 def scrap_image(request, id):
     noticia = Noticia.objects.get(id=id)
-    img_path = noticia_imagem_path()
-    file_path = save_image(noticia.media, img_path, noticia.id)
-    if file_path:
-        noticia.imagem = file_path
-        noticia.save()
-        messages.info(request, 'Imagem validada e armazenada')
+    if noticia.media:
+        url = noticia.media
     else:
+        soup = load_html(noticia.url, 10, False)
+        if soup:
+            url = scrap_best_image(soup)
+        else:
+            url = None
+
+    if url:
+        img_path = noticia_imagem_path()
+        file_path = save_image(url, img_path, noticia.id)
+        if file_path:
+            noticia.imagem = file_path
+            noticia.save()
+            messages.info(request, 'Imagem validada e armazenada')
+        else:
+            url = None
+
+    if not url:
         messages.error(
-            request, 'Não foi possível carregar a imagem. Verifique a URL da imagem')
+            request, 'Não foi possível carregar a imagem. Verifique a URL da imagem ou da notícia')
 
     return redirect(reverse('admin:base_noticia_change', args=(id,)))
 
