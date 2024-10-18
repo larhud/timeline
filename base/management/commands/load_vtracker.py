@@ -65,8 +65,9 @@ class Command(BaseCommand):
             noticia.atualizado = True
             noticia.visivel = True
             noticia.save()
-            assunto = Assunto(termo=timeline, noticia=noticia, id_externo=tot_lidos)
-            assunto.save()
+            if noticia.assunto_set.count() == 0:
+                assunto = Assunto(termo=timeline, noticia=noticia, id_externo=tot_lidos)
+                assunto.save()
 
             # Validando a URL
             hostname = noticia.url.split("//")[-1].split("/")[0].split('?')[0]

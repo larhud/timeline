@@ -134,6 +134,8 @@ def nuvem_de_palavras(request):
     }
 
     noticias = Noticia.objects.pesquisa(**form.cleaned_data)
+    count = noticias.count()
+    print(count)
     if not noticias:
         return JsonResponse(context, safe=False)
 
