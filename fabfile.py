@@ -14,6 +14,8 @@ def deploy(context):
 
     with connection.cd('/var/webapp/timeline3/timeline'):
         connection.run('git pull')
+        connection.run('../bin/pip uninstall -y requests urllib3 Django')
+        connection.run('../bin/pip install -r requirements.txt')
         connection.run('../bin/python manage.py migrate')
         connection.run('../bin/python manage.py collectstatic --noinput')
         connection.run('supervisorctl restart timeline')

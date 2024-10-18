@@ -68,9 +68,6 @@ class Command(BaseCommand):
             assunto = Assunto(termo=timeline, noticia=noticia, id_externo=tot_lidos)
             assunto.save()
 
-            if noticia.revisado:
-                continue
-
             # Validando a URL
             hostname = noticia.url.split("//")[-1].split("/")[0].split('?')[0]
             timeout = host_timeout.get(hostname, 10)
