@@ -87,9 +87,9 @@ def build_crono_cloud(noticias_termo, n_slot=15):
     # remove os que aparecem em todas as listas
     if len(unanimes) > 0:
         for slot in l_slots:
-            for palavra, count in slot[2]:
+            for index, (palavra, _) in enumerate(slot[2]):
                 if palavra in unanimes:
-                    del slot[2][palavra]
+                    del slot[2][index]
 
     l_result = []
     for item in l_slots:
