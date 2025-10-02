@@ -1,4 +1,8 @@
+import mimetypes
 import os
+from http import HTTPStatus
+from urllib.parse import urlparse
+
 import requests
 from bs4 import BeautifulSoup
 from django.conf import settings
@@ -29,9 +33,9 @@ def load_html(url, file_id, use_cache=False, timeout=10):
 
     try:
         headers = {'user-agent':
-                   'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+                       'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
         response = requests.get(url, headers=headers, timeout=timeout)
-        if response.status_code == 200:
+        if response.status_code == HTTPStatus.OK:
             soup = extract_scripts_and_styles(response.content)
             if soup and not use_cache:
                 with open(f"{html_path}/{file_id}.html", 'w') as file:
@@ -43,27 +47,122 @@ def load_html(url, file_id, use_cache=False, timeout=10):
         return
 
 
-# Rotina salva a imagem indicada na URL no path indicado.
-# A tipo da imagem é "calculado" e incluído ao path
-def save_image(url, full_path, id_noticia):
-    server_filename = url.split('/')[-1]
-    file_ext = server_filename.split('.')[-1].split('?')[0]
-    if len(file_ext) > 4 or len(file_ext) == 0 or file_ext == 'img':
-        file_ext = 'jpeg'
-    full_path += '/%d.%s' % (id_noticia, file_ext)
-    try:
-        headers = {'user-agent':
-                       'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
-        response = requests.get(url, headers=headers, timeout=10)
-        if response.status_code == 200:
-            with open(full_path, 'wb') as file:
-                file.write(response.content)
-            relative_path = '/media/img/' + full_path.split('/')[-1]
-        else:
+class BaseDownload:
+    """Classe base para download de um arquivo e retorno do caminho relativo"""
+
+    def __init__(self, url, file_path, id_noticia):
+        self.url = url
+        self.file_path = file_path
+        self.id_noticia = id_noticia
+
+    def download(self):
+        """Faz download do arquivo da url e retorna o caminho relativo do arquivo"""
+        raise NotImplementedError()
+
+    def __call__(self):
+        return self.download()
+
+    def get_filename(self):
+        return self.url.split('/')[-1].split('?')[0]
+
+
+class RegularImageDownload(BaseDownload):
+    """Baixa a imagem de uma url regular"""
+
+    def download(self):
+        server_filename = self.get_filename()
+        file_ext = server_filename.split('.')[-1]
+
+        if len(file_ext) > 4 or len(file_ext) == 0 or file_ext == 'img':
+            file_ext = 'jpeg'
+
+        new_file_name = '%d.%s' % (self.id_noticia, file_ext)
+
+        full_path = os.path.join(self.file_path, new_file_name)
+
+        try:
+            headers = {'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+            response = requests.get(self.url, headers=headers, timeout=10)
+            if response.status_code == HTTPStatus.OK:
+                # TODO: Usar o sistema de storages para lidar com arquivos
+                with open(full_path, 'wb') as file:
+                    file.write(response.content)
+                relative_path = os.path.join(settings.MEDIA_URL, 'img', new_file_name)
+            else:
+                relative_path = None
+        except Exception:
             relative_path = None
-    except Exception as e:
-        relative_path = None
-    return relative_path
+
+        return relative_path
+
+
+class GoogleDriveDownload(BaseDownload):
+    """
+    Baixa um arquivo do Google Drive usando o ID do arquivo e o truque da URL de download direto.
+    """
+    # URL de Download Direto
+    DOWNLOAD_URL = "https://drive.google.com/uc?export=download"
+
+    def download(self):
+        try:
+            # 1. Configuração da Sessão
+            session = requests.Session()
+            # 2. Faz a primeira requisição GET com o ID do arquivo
+            file_id = self.get_filename()
+            response = session.get(self.DOWNLOAD_URL, params={'id': file_id}, stream=True)
+            # 3. Verifica se há um aviso de segurança/vírus (para arquivos grandes)
+            # O Google Drive às vezes exibe um aviso para arquivos grandes, exigindo a confirmação 'confirm=...'
+            token = self.get_confirm_token(response)
+
+            if token:
+                # Se houver token, faz uma nova requisição com a confirmação
+                params = {'id': file_id, 'confirm': token}
+                response = session.get(self.DOWNLOAD_URL, params=params, stream=True)
+            # 4. Obtem a extensão do arquivo e monta no nome dele
+            content_type = response.headers.get('Content-Type', '').split(';')[0]
+            raw_ext = mimetypes.guess_extension(content_type)
+            # Remove o ".", caso exista. Retorna jpeg como fallback.
+            raw_ext = raw_ext.split('.')[-1] or 'jpeg'
+            new_file_name = '%s.%s' % (self.id_noticia, raw_ext)
+            # 5. Grava o conteúdo no arquivo
+            full_path = os.path.join(self.file_path, new_file_name)
+            chunk_size = 32768  # 32KB
+            with open(full_path, "wb") as f:
+                # TODO: Usar o sistema de storages para lidar com arquivos
+                for chunk in response.iter_content(chunk_size):
+                    if chunk:
+                        f.write(chunk)
+
+            return os.path.join(settings.MEDIA_URL, 'img', new_file_name)
+        except Exception:
+            return None
+
+    @staticmethod
+    def get_confirm_token(response):
+        """
+        Extrai o token de confirmação necessário para baixar arquivos grandes.
+        """
+        for key, value in response.cookies.items():
+            if key.startswith('download_warning'):
+                return value
+        return None
+
+
+def save_image(url, full_path, id_noticia):
+    """
+    Executa a classe que salva a imagem indicada na URL no path indicado.
+    A tipo da imagem é "calculado" e incluído ao path.
+    """
+    download_map = {
+        'drive.google.com': GoogleDriveDownload,
+    }
+
+    parsed_url = urlparse(url)
+    domain = parsed_url.netloc
+
+    downloader_class = download_map.get(domain, RegularImageDownload)
+
+    return downloader_class(url, full_path, id_noticia)()
 
 
 # Busca a imagem mais relevante no objeto Soup
