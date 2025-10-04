@@ -1,3 +1,4 @@
+import logging
 import mimetypes
 import os
 from http import HTTPStatus
@@ -6,6 +7,8 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 # remove all script and style elements from HTML
@@ -54,9 +57,15 @@ class BaseDownload:
         self.url = url
         self.file_path = file_path
         self.id_noticia = id_noticia
+        self.chunk_size = 32768
 
     def download(self):
-        """Faz download do arquivo da url e retorna o caminho relativo do arquivo"""
+        """
+        Função abstrata. Responsável por:
+        1. Fazer a requisição HTTP.
+        2. Determinar a extensão.
+        3. Chamar e retornar o resultado de _download_and_stream_to_disk.
+        """
         raise NotImplementedError()
 
     def __call__(self):
@@ -65,35 +74,53 @@ class BaseDownload:
     def get_filename(self):
         return self.url.split('/')[-1].split('?')[0]
 
+    def _download_and_stream_to_disk(self, response, new_file_name):
+        """
+        Grava o conteúdo da resposta HTTP no disco em chunks.
+
+        :param response: Objeto requests.Response com stream=True.
+        :param new_file_name: Nome final do arquivo (ex: 123.jpg).
+        :return: Caminho relativo do arquivo salvo.
+        """
+        full_path = os.path.join(self.file_path, new_file_name)
+
+        try:
+            with open(full_path, "wb") as f:
+                for chunk in response.iter_content(self.chunk_size):
+                    if chunk:
+                        f.write(chunk)
+            # Retorna o caminho relativo
+            return os.path.join(settings.MEDIA_URL, 'img', new_file_name)
+
+        except Exception as e:
+            logger.error(f'Erro ao escrever arquivo no disco: {full_path}. Erro: {e}', exc_info=True)
+            return None
+
 
 class RegularImageDownload(BaseDownload):
     """Baixa a imagem de uma url regular"""
 
     def download(self):
-        server_filename = self.get_filename()
-        file_ext = server_filename.split('.')[-1]
-
-        if len(file_ext) > 4 or len(file_ext) == 0 or file_ext == 'img':
-            file_ext = 'jpeg'
-
-        new_file_name = '%d.%s' % (self.id_noticia, file_ext)
-
-        full_path = os.path.join(self.file_path, new_file_name)
-
         try:
             headers = {'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:23.0) Gecko/20100101 Firefox/23.0'}
             response = requests.get(self.url, headers=headers, timeout=10)
-            if response.status_code == HTTPStatus.OK:
-                # TODO: Usar o sistema de storages para lidar com arquivos
-                with open(full_path, 'wb') as file:
-                    file.write(response.content)
-                relative_path = os.path.join(settings.MEDIA_URL, 'img', new_file_name)
-            else:
-                relative_path = None
-        except Exception:
-            relative_path = None
 
-        return relative_path
+            if response.status_code != HTTPStatus.OK:
+                return None
+
+            server_filename = self.get_filename()
+
+            file_ext = server_filename.split('.')[-1]
+
+            if len(file_ext) > 4 or len(file_ext) == 0 or file_ext == 'img':
+                file_ext = 'jpeg'
+
+            new_file_name = '%d.%s' % (self.id_noticia, file_ext)
+
+            return self._download_and_stream_to_disk(response, new_file_name)
+        except Exception as e:
+            logger.error(f'Erro no download da url {self.url}: {e}', exc_info=True)
+            return None
 
 
 class GoogleDriveDownload(BaseDownload):
@@ -118,23 +145,19 @@ class GoogleDriveDownload(BaseDownload):
                 # Se houver token, faz uma nova requisição com a confirmação
                 params = {'id': file_id, 'confirm': token}
                 response = session.get(self.DOWNLOAD_URL, params=params, stream=True)
+
+            if response.status_code != HTTPStatus.OK:
+                return None
             # 4. Obtem a extensão do arquivo e monta no nome dele
             content_type = response.headers.get('Content-Type', '').split(';')[0]
             raw_ext = mimetypes.guess_extension(content_type)
             # Remove o ".", caso exista. Retorna jpeg como fallback.
             raw_ext = raw_ext.split('.')[-1] or 'jpeg'
             new_file_name = '%s.%s' % (self.id_noticia, raw_ext)
-            # 5. Grava o conteúdo no arquivo
-            full_path = os.path.join(self.file_path, new_file_name)
-            chunk_size = 32768  # 32KB
-            with open(full_path, "wb") as f:
-                # TODO: Usar o sistema de storages para lidar com arquivos
-                for chunk in response.iter_content(chunk_size):
-                    if chunk:
-                        f.write(chunk)
 
-            return os.path.join(settings.MEDIA_URL, 'img', new_file_name)
-        except Exception:
+            return self._download_and_stream_to_disk(response, new_file_name)
+        except Exception as e:
+            logger.error(f'Erro no download da url {self.url}: {e}', exc_info=True)
             return None
 
     @staticmethod
