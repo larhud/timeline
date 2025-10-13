@@ -1,6 +1,7 @@
 import logging
 import mimetypes
 import os
+import re
 from http import HTTPStatus
 from urllib.parse import urlparse
 
@@ -129,6 +130,30 @@ class GoogleDriveDownload(BaseDownload):
     """
     # URL de Download Direto
     DOWNLOAD_URL = "https://drive.google.com/uc?export=download"
+
+    def get_filename(self):
+        """
+        Extrai o ID do arquivo de diferentes formatos de URL do Google Drive/Colab.
+        """
+        url = self.url
+        # Regex que busca por padrões comuns:
+        # 1. /d/ID_DO_ARQUIVO/view ou /d/ID_DO_ARQUIVO/edit, etc.
+        # 2. /drive/ID_DO_ARQUIVO?
+        # 3. id=ID_DO_ARQUIVO (Links de download)
+
+        # Regex (O ID do Google Drive consiste em caracteres alfanuméricos, hífens e underscores)
+        match = re.search(r'file/d/([\w-]+)|/drive/([\w-]+)\?|id=([\w-]+)', url)
+
+        if match:
+            # O ID será o primeiro grupo capturado não nulo (1, 2 ou 3)
+            # Ex: (None, '1pgfnyAxAWa2hnIeFPj8T91MGLhrYSPbb', None)
+            file_id = next(filter(None, match.groups()), None)
+
+            if file_id:
+                return file_id
+
+        logger.error(f'Não foi possível encontrar um ID de arquivo/pasta na URL do Drive: {url}')
+        return None
 
     def download(self):
         try:
