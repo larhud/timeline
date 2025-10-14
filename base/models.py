@@ -18,6 +18,7 @@ class Termo(models.Model):
     visivel = models.BooleanField('Visível', default=True)
     num_reads = models.BigIntegerField('Núm.Acessos', default=0)
     stopwords = models.TextField(null=True, blank=True)
+    # tema_css = models.TextField('Tema CSS', null=True, blank=True)
 
     class Meta:
         verbose_name = 'Timeline'

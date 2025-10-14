@@ -1,6 +1,42 @@
 {% extends 'timeline.html' %}
+{% load static %}
 
 {% block title %}LARHUD Ibict - Timeline {{ object|capfirst }}{% endblock %}
+
+{% block styles %}
+    {% if object.tema_css %}
+        <style>
+            {{ object.tema_css | safe }}
+        </style>
+    {% endif %}
+    <style>
+        .tema .tl-slider-background.tl-animate {
+            background-color: #0b434f !important;
+        }
+        
+        .tema  h1 {
+            color: #0b434f;
+        }
+
+        .tema .btn-primary{
+            background-color: #0b434f;
+            border-color: #0b434f;
+        }
+        
+        .tema h2 {
+            color: #0b434f !important;
+        }
+        
+        .tema #dropDownMes svg path {
+          stroke: #0b434f;
+        }
+        
+        .tema #dropDownAno svg path {
+          stroke: #0b434f;
+        }        
+    </style>
+    <link rel="stylesheet" href="{% static 'site/css/crono-cloud.css' %}">
+{% endblock %}
 
 {% block termo_descricao %}
   <h1 style="margin-top: -10px;">Timeline {{ object|capfirst }}</h1>

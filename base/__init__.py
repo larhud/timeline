@@ -1,7 +1,8 @@
-import logging
 import mimetypes
-import os
+import logging
 import re
+import os
+
 from http import HTTPStatus
 from urllib.parse import urlparse
 
@@ -9,7 +10,16 @@ import requests
 from bs4 import BeautifulSoup
 from django.conf import settings
 
+
 logger = logging.getLogger(__name__)
+
+
+def noticia_imagem_path():
+    base_dir = os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]
+    base_dir = '/'.join(base_dir)
+    img_path = os.path.join('/', base_dir, 'media', 'img')
+    os.makedirs(img_path, exist_ok=True)
+    return img_path
 
 
 # remove all script and style elements from HTML
@@ -49,6 +59,43 @@ def load_html(url, file_id, use_cache=False, timeout=10):
             return
     except Exception as e:
         return
+
+
+# Busca a imagem mais relevante no objeto Soup
+# Busca pelo og:image, twitter:image ou imagem dentro das tags de notícia
+def scrap_best_image(soup):
+    imagem = None
+    tag = soup.find("meta", property="og:image")
+    if tag:
+        imagem = tag['content']
+    else:
+        tag = soup.find("meta", property="”twitter:image”")
+        if tag:
+            imagem = tag['content']
+
+    if not imagem:
+        for line in soup.find_all("div", {"class": ["noticia-img", ]}):
+            link = line.find('img')
+            if link:
+                imagem = link['src']
+                break
+
+    if not imagem:
+        for line in soup.find_all("div", {"class": ["noticia", "entry-body",
+                                                    "content-text", "content-noticia", "post-item-wrap"]}):
+            link = line.find('img')
+            if link:
+                imagem = link['src']
+                break
+
+    if not imagem:
+        for link in soup.find_all('img'):
+            imagem = link['src']
+            break
+
+    return imagem
+
+
 
 
 class BaseDownload:
@@ -211,38 +258,3 @@ def save_image(url, full_path, id_noticia):
     downloader_class = download_map.get(domain, RegularImageDownload)
 
     return downloader_class(url, full_path, id_noticia)()
-
-
-# Busca a imagem mais relevante no objeto Soup
-# Busca pelo og:image, twitter:image ou imagem dentro das tags de notícia
-def scrap_best_image(soup):
-    imagem = None
-    tag = soup.find("meta", property="og:image")
-    if tag:
-        imagem = tag['content']
-    else:
-        tag = soup.find("meta", property="”twitter:image”")
-        if tag:
-            imagem = tag['content']
-
-    if not imagem:
-        for line in soup.find_all("div", {"class": ["noticia-img", ]}):
-            link = line.find('img')
-            if link:
-                imagem = link['src']
-                break
-
-    if not imagem:
-        for line in soup.find_all("div", {"class": ["noticia", "entry-body",
-                                                    "content-text", "content-noticia", "post-item-wrap"]}):
-            link = line.find('img')
-            if link:
-                imagem = link['src']
-                break
-
-    if not imagem:
-        for link in soup.find_all('img'):
-            imagem = link['src']
-            break
-
-    return imagem

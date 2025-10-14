@@ -7,9 +7,9 @@ import time
 from csv import DictReader
 from django.conf import settings
 from django.core.management.base import BaseCommand
+
+from base import save_image, noticia_imagem_path, scrap_best_image, load_html
 from base.models import Noticia, Termo, Assunto
-from timeline.settings import noticia_imagem_path
-from base import save_image, scrap_best_image, load_html
 
 logging.basicConfig(
     level=logging.INFO,

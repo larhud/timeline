@@ -1,23 +1,26 @@
 import os
-import requests
 
 from django.core.management.base import BaseCommand
-from base.models import Noticia
-from timeline.settings import noticia_imagem_path
-from base import save_image, scrap_best_image, load_html
+
+from base import noticia_imagem_path, save_image, scrap_best_image, load_html
+from base.models import Noticia, Termo
 
 
 class Command(BaseCommand):
     help = 'Import as imagens em cache'
 
     def add_arguments(self, parser):
-        parser.add_argument('-i', '--id', type=int, help='Id da Notícia', default=0)
+        parser.add_argument('-i', '--id', type=int, help='Notícia ID', default=0)
+        parser.add_argument('-t', '--timeline', type=int, help='Timeline ID', default=0)
 
     def handle(self, *args, **options):
         img_path = noticia_imagem_path()
         tot_lidos = 0
         tot_scrap = 0
-        if options['id'] == 0:
+        if options['timeline'] != 0:
+            termo = Termo.objects.get(id=options['timeline'])
+            dataset = Noticia.objects.filter(assunto__termo=termo, url_valida=False)
+        elif options['id'] == 0:
             dataset = Noticia.objects.filter(url_valida=True, media__isnull=False, imagem__isnull=True)
         else:
             dataset = Noticia.objects.filter(id=options['id'])
@@ -29,8 +32,8 @@ class Command(BaseCommand):
                     base_dir = '/'.join(base_dir)
                     html_path = os.path.join('/', base_dir, 'media', 'html')
                     soup = load_html(html_path, options['id'], use_cache=True)
-                    imagem_url = scrap_best_image(soup)
-                    print('Nenhuma imagem definida' % options['id'])
+                    scrap_best_image(soup)
+                    print('Nenhuma imagem definida')
 
         for noticia in dataset:
             tot_lidos += 1
@@ -52,6 +55,8 @@ class Command(BaseCommand):
                 noticia.notas += '[Imagem não recuperada]'
                 noticia.save()
                 print(f'Imagem ({noticia.id} não carregada: {noticia.media}')
+            if tot_scrap > 2:
+                break
 
         print(f'Total de registros lidos: {tot_lidos}')
-        print(f'Total de registros capturados: {tot_scrap}')
+        print(f'Total de imagens renderizadas: {tot_scrap}')

@@ -7,8 +7,6 @@ import json
 from datetime import datetime, date, timedelta
 from io import TextIOWrapper
 
-import time
-
 import requests
 from bs4 import BeautifulSoup
 
@@ -23,12 +21,13 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.views.generic import DetailView, TemplateView
 
-from base import save_image, scrap_best_image
+from base import save_image, scrap_best_image, noticia_imagem_path
+
 from base.forms import FormImportacaoCSV, IntervaloNoticias, BuscaArquivoPT, FormBuscaTimeLine, ContatoForm
 from base.models import Noticia, Termo, Assunto, URL_MAX_LENGTH
 from base.management.commands.get_text import extract_text, load_html
 from powercms.crm.models import Contato
-from timeline.settings import noticia_imagem_path
+
 from django.db.models import Count
 
 

@@ -137,10 +137,3 @@ DATE_INPUT_FORMATS = '%d/%m/%Y'
 DATE_TIME_INPUT_FORMATS = '%d/%m/%Y %H:%m'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
-
-def noticia_imagem_path():
-    base_dir = os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]
-    base_dir = '/'.join(base_dir)
-    img_path = os.path.join('/', base_dir, 'media', 'img')
-    os.makedirs(img_path, exist_ok=True)
-    return img_path

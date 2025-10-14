@@ -1,8 +1,8 @@
 import ast
+
 from collections import Counter
 
 import requests
-from bs4 import BeautifulSoup
 from django.core.validators import EMPTY_VALUES
 from django.db import models
 from django.db.models import Count, Q

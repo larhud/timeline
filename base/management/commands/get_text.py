@@ -3,6 +3,7 @@ import re
 
 from django.core.management.base import BaseCommand
 from base import save_image, scrap_best_image, load_html
+
 from base.models import Noticia
 from urllib.parse import urlparse
 
