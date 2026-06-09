@@ -1,8 +1,8 @@
 import hashlib
 
-from cms.models import Recurso
-from django.contrib.staticfiles.templatetags.staticfiles import static
+from powercms.cms.models import Recurso
 from django.db import models
+from django.templatetags.static import static
 from django.urls import reverse_lazy
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
@@ -11,29 +11,33 @@ from base.managers import NoticiaQueryset, test_url, build_wordcloud, AssuntoMan
 
 
 class Termo(models.Model):
-    termo = models.CharField(max_length=120, unique=True)
+    termo = models.CharField(max_length=120, unique=True, verbose_name='Timeline')
     texto_explicativo = models.TextField(null=True)
     slug = models.CharField(max_length=60, null=True)
     imagem = models.ImageField(upload_to='uploads', null=True, blank=True)
     visivel = models.BooleanField('Visível', default=True)
     num_reads = models.BigIntegerField('Núm.Acessos', default=0)
+    stopwords = models.TextField(null=True, blank=True)
 
     class Meta:
-        verbose_name = 'Termo'
-        verbose_name_plural = 'Termos'
+        verbose_name = 'Timeline'
+        verbose_name_plural = 'Timelines'
 
     def __str__(self):
         return self.termo
 
     def tot_noticias(self):
         return self.assunto_set.count() or 0
+    tot_noticias.short_description = "Total de Notícias"
+
+    def tot_invalidas(self):
+        return self.assunto_set.filter(noticia__url_valida=False).count() or 0
+    tot_invalidas.short_description = "URLs inválidas"
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.termo)[:60]
         super(Termo, self).save(*args, **kwargs)
-
-    tot_noticias.short_description = "Total de Notícias"
 
     def get_absolute_url(self):
         return reverse_lazy('timeline_por_termo', kwargs={'slug': self.slug})
@@ -60,11 +64,18 @@ class Noticia(models.Model):
     dt = models.DateField(db_index=True)
     url = models.URLField(max_length=URL_MAX_LENGTH)
     url_hash = models.CharField(max_length=64, unique=True)
-    url_valida = models.BooleanField('URL Válida', default=False)
-    atualizado = models.BooleanField('Texto atualizado', default=False)  # se o texto_completo foi atualizado
-    revisado = models.BooleanField('Texto revisado', default=False)  # se o texto completo foi revisado por um editor
-    pdf_atualizado = models.BooleanField('PDF gerado', default=False)  # se o PDF foi obtido com sucesso
-    coletanea = models.BooleanField('Coletânea', default=False)
+    url_valida = models.BooleanField('URL Válida', default=False,
+                                     help_text='Indica que a URL foi validada. '
+                                               'Para revalidá-la, clique no botão Capturar Texto')
+    atualizado = models.BooleanField('Texto atualizado', default=False,   # se o texto_completo foi atualizado
+                                     help_text='Indica que o texto da notícia foi capturado')
+    revisado = models.BooleanField('Texto revisado', default=False, # se o texto completo foi revisado por um editor
+                                   help_text='Permite que editor indique que o texto foi revisado. '
+                                             'Após esta marcação, o sistema não atualiza mais nenhuma informação.')
+    pdf_atualizado = models.BooleanField('PDF gerado', default=False,   # se o PDF foi obtido com sucesso
+                                         help_text='Indica que o PDF da página já está arquivado')
+    coletanea = models.BooleanField('Coletânea', default=False,
+                                    help_text='Indica que o artigo é uma coletânea de várias notícias')
     visivel = models.BooleanField('Visível ao público', default=True)  # se o artigo é visivel no timeline
     titulo = models.TextField('Título')
     texto = models.TextField('Texto Base', null=True, blank=True)
@@ -76,7 +87,7 @@ class Noticia(models.Model):
     nuvem = models.TextField(null=True, blank=True)
     texto_busca = models.TextField(null=True, blank=True)
     id_externo = models.IntegerField(null=True, blank=True, db_index=True)
-    notas = models.TextField(blank=True, null=True)
+    notas = models.TextField(blank=True, null=True, help_text='Notas sobre a coleta')
 
     objects = NoticiaQueryset.as_manager()
 
@@ -121,17 +132,16 @@ class Noticia(models.Model):
 
     def pdf_file(self):
         if self.pdf_atualizado:
-            return mark_safe(f'<a href="/media/pdf/{self.id}.pdf" target="_blank">Baixar Arquivo</a>')
+            return mark_safe(f'<a href="/media/pdf/{self.id}.pdf" target="_blank">Baixar PDF</a>')
         else:
             return ''
-
     pdf_file.short_description = 'PDF Atual'
 
     def save(self, *args, **kwargs):
         if not self.url_hash:
             self.url_hash = hashlib.sha256(self.url.encode('utf-8')).hexdigest()
 
-        if not self.url_valida and self.visivel:
+        if not self.revisado and self.url_valida is None:
             self.url_valida = test_url(self.url)
 
         if 'form' in kwargs:
@@ -146,10 +156,9 @@ class Noticia(models.Model):
             self.imagem = None
 
         # só monta a nuvem se o texto fo visivel e ainda não estiver marcado como revisado
-        if not self.visivel or self.revisado:
-            if not self.revisado:
-                self.texto_busca = None
-                self.nuvem = None
+        if not self.visivel or not self.revisado:
+            self.texto_busca = None
+            self.nuvem = None
         else:
             nuvem, nuvem_sem_bigramas = self.gerar_nuvem()
             if nuvem:
@@ -177,7 +186,7 @@ class Noticia(models.Model):
 
 class Assunto(models.Model):
     noticia = models.ForeignKey(Noticia, on_delete=models.CASCADE)
-    termo = models.ForeignKey(Termo, on_delete=models.CASCADE)
+    termo = models.ForeignKey(Termo, on_delete=models.CASCADE, verbose_name='Timeline')
     id_externo = models.IntegerField(null=True, blank=True)
 
     objects = AssuntoManager()
@@ -189,6 +198,31 @@ class Assunto(models.Model):
 
     def __str__(self):
         return '%s' % self.noticia
+
+
+class Canal(models.Model):
+    nome = models.CharField(max_length=100)
+    domain = models.URLField()
+
+    def __str__(self):
+        return '%s' % self.nome
+
+
+class CanalRegra(models.Model):
+    TIPO_REGRA = (
+        ('C', 'Contém'),
+        ('I', 'Ignore')
+    )
+
+    canal = models.ForeignKey(Canal, on_delete=models.CASCADE)
+    tipo_regra = models.CharField(max_length=1, choices=TIPO_REGRA)
+    regra = models.TextField()
+
+    def __str__(self):
+        return f'{self.canal} {self.get_tipo_regra_display()}'
+
+    class Meta:
+        verbose_name = 'Regra do Canal'
 
 
 class Busca(models.Model):

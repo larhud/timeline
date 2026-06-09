@@ -7,7 +7,7 @@ __pycache__
 *.sqlite3
 *.fuse_hidden*
 *.vscode
-data
+data/*
 .venv/
 import
 uploads
@@ -19,3 +19,4 @@ theme
 timeline/local.py
 db.original
 createdb.sql
+*.log

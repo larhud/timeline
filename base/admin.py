@@ -16,7 +16,8 @@ class AssuntoInline(InlineModelAdmin):
 
 
 class NoticiaFormAdd(forms.ModelForm):
-    termo = forms.ModelChoiceField(label='Termo', queryset=Termo.objects.all(), required=True, initial=Termo.objects.last().id)
+    termo = forms.ModelChoiceField(label='Timeline', queryset=Termo.objects.all(),
+                                   required=True, initial=Termo.objects.last().id)
     url = forms.URLField(widget=URLInput(attrs={'size': 100}), required=True)
     dt = forms.DateField(widget=NumberInput(attrs={'type': 'date'}))
     fonte = forms.CharField(label='Fonte da Notícia', widget=URLInput(attrs={'size': 60}), required=True)
@@ -63,6 +64,19 @@ class NoticiaEdit(forms.ModelForm):
         fields = "__all__"
 
 
+class ImagemListFilter(admin.SimpleListFilter):
+    title = 'Imagem Válida'
+    parameter_name = 'media__isnull'
+
+    def lookups(self, request, model_admin):
+        """0 = Imagem válida (media__isnull=False) / 1 = Imagem inválida (media__isnull=True)"""
+        return ((0, 'Sim'), (1, 'Não'))
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            return queryset.filter(**{self.parameter_name: int(self.value())})
+
+
 class NoticiaAdmin(PowerModelAdmin):
     multi_search = (
         ('q1', 'Texto', ['titulo', 'texto']),
@@ -70,12 +84,12 @@ class NoticiaAdmin(PowerModelAdmin):
         ('q3', 'ID', ['id_externo']),
         ('q4', 'Veículo', ['fonte']),
     )
-    list_filter = ('url_valida', 'atualizado', 'revisado', 'visivel', 'assunto__termo')
+    list_filter = ('assunto__termo', 'url_valida', 'atualizado', 'revisado', 'visivel', ImagemListFilter)
     date_hierarchy = 'dt'
     list_display = ('id_externo', 'dt', 'titulo', 'fonte', 'url_valida', 'revisado', 'visivel')
     ordering = ('id_externo',)
     fields = (('dt', 'id_externo'), 'titulo', 'url', 'texto',
-              ('fonte', 'url_valida', 'atualizado', 'revisado', 'coletanea', 'visivel'),
+              ('fonte', 'url_valida', 'atualizado'), ('coletanea', 'revisado', 'visivel'),
               'media', 'texto_completo', 'nuvem', 'texto_busca', 'imagem_link', 'extra_field', 'pdf_file', 'notas')
     readonly_fields = ('pdf_file', 'imagem_link')
 
@@ -95,6 +109,21 @@ class NoticiaAdmin(PowerModelAdmin):
         else:
             self.form = NoticiaEdit
         return super(NoticiaAdmin, self).get_form(request, obj, **kwargs)
+
+    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+
+        if add:
+            context.update({
+                'show_save': False,
+                'show_save_and_continue': True,
+                'title': f'{self.model._meta.verbose_name} - Etapa 1'
+            })
+        else:
+            context['show_save_and_continue'] = self.has_add_permission(request),
+
+        context['show_save_and_add_another'] = True
+
+        return super().render_change_form(request, context, add, change, form_url, obj)
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == 'texto_completo':
@@ -154,8 +183,8 @@ class NoticiaAdmin(PowerModelAdmin):
 
 class TermoAdmin(PowerModelAdmin):
     search_fields = ('termo',)
-    list_display = ('termo', 'slug', 'tot_noticias',)
-    readonly_fields = ('tot_noticias',)
+    list_display = ('termo', 'slug', 'tot_noticias', 'tot_invalidas')
+    readonly_fields = ('tot_noticias', 'tot_invalidas')
 
 
 admin.site.register(Termo, TermoAdmin)

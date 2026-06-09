@@ -9,12 +9,18 @@ warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
 @task
 def deploy(context):
     connection = Connection('200.130.45.80', user='webapp', port=8090)
-    with connection.cd('/var/webapp/timeline/timeline'):
+    with connection.cd('/var/webapp/timeline3/tema'):
         connection.run('git pull')
+
+    with connection.cd('/var/webapp/timeline3/timeline'):
+        connection.run('git pull')
+        connection.run('../bin/pip uninstall -y requests urllib3 Django')
+        connection.run('../bin/pip install -r requirements.txt')
         connection.run('../bin/python manage.py migrate')
         connection.run('../bin/python manage.py collectstatic --noinput')
         connection.run('supervisorctl restart timeline')
-        print('Atualização efetuada')
+
+    print('Atualização efetuada')
 
 
 @task
@@ -54,12 +60,12 @@ def backup(connection, base):
         connection.run('mysqldump -u timeline -p"%s" %s --no-tablespaces | gzip > %s' % (senha, base, filename))
         print(filename)
         connection.get(filename)
-        # connection.run('rm %s' % path+filename)
+        # connection.run('rm %s' % filename)
 
 
 @task
 def backup_producao(context):
-    backup(Connection('200.130.45.80', user='webapp', port=8090), base='timeline')
+    backup(Connection('200.130.45.80', user='webapp', port=8090), base='timeline2')
 
 @task
 def backup_teste(context):

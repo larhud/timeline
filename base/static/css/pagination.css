@@ -1,0 +1,47 @@
+/* css para pagination.js no template do admin */
+.paginationjs {
+    display: flex;
+    border-bottom: 1px solid var(--hairline-color);
+    margin-bottom: 10px;
+}
+
+.paginationjs .paginationjs-pages {
+    float: left;
+    margin-left: 0;
+}
+
+.paginationjs .paginationjs-pages ul {
+    float: left;
+    margin-left: 0;
+}
+
+.paginationjs .paginationjs-pages li {
+    float: left;
+    list-style: none;
+}
+
+.paginationjs .paginationjs-pages li > a {
+    display: block;
+    background: var(--button-bg);
+    color: var(--button-fg);
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    padding: 2px 6px;
+    margin-right: 1px;
+}
+
+.paginationjs .paginationjs-pages li > a:hover {
+    background: var(--link-hover-color);
+}
+
+.paginationjs .paginationjs-pages li.active {
+    border: none;
+}
+
+.paginationjs .paginationjs-pages li.active > a,
+.paginationjs .paginationjs-pages li.disabled > a {
+    background: var(--primary-fg);
+    color: var(--body-quiet-color);
+    cursor: default;
+}

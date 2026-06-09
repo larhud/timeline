@@ -1,24 +1,23 @@
 import ast
-import requests
 from collections import Counter
+
+import requests
 from bs4 import BeautifulSoup
-
-from django.db import models
-from cms.models import Recurso
-
 from django.core.validators import EMPTY_VALUES
 from django.db import models
-from django.db.models import Count
+from django.db.models import Count, Q
+
+from powercms.cms.models import Recurso
 
 
 def test_url(url):
     try:
         r = requests.get(url)
         if r.status_code == 200:
-            soup = BeautifulSoup(r.content, features="html.parser")
-            if soup.title:
-                title = soup.title.string
-            return True
+            if len(r.history) > 0 and r.history[0].status_code == 301:
+                return False
+            else:
+                return True
     except Exception as e:
         None
     return False
@@ -162,5 +161,10 @@ class AssuntoManager(models.Manager):
         return super().get_queryset().select_related('termo')
 
     def fontes(self, termo):
-        return self.filter(termo__pk=termo, noticia__visivel=True).exclude(noticia__fonte='').\
-            values('noticia__fonte').annotate(Count('noticia__fonte')).order_by('noticia__fonte')
+        return self.filter(termo__pk=termo, noticia__visivel=True).values('noticia__fonte').annotate(
+            validos=Count('noticia__url_valida', filter=Q(noticia__url_valida=True)),
+            invalidos=Count('noticia__url_valida', filter=Q(noticia__url_valida=False)),
+            total=Count('noticia__id')).order_by('noticia__fonte')
+
+        # return self.filter(termo__pk=termo, noticia__visivel=True).exclude(noticia__fonte='').\
+        #    values('noticia__fonte').annotate(Count('noticia__fonte')).order_by('noticia__fonte')

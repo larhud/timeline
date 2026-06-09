@@ -1,7 +1,9 @@
 from calendar import monthrange
 
-from cms.email import sendmail
-from cms.models import Recurso
+from powercms.cms.email import sendmail
+from powercms.cms.models import Recurso
+from powercms.crm.models import Contato
+
 from django import forms
 from django.contrib.admin.views.main import ChangeList
 from django.core.validators import EMPTY_VALUES
@@ -75,6 +77,43 @@ class AnoMesField(forms.MultiValueField):
         return result
 
 
+class AnoMesWidget(forms.MultiWidget):
+
+    def __init__(self, *args, **kwargs):
+        widgets = (forms.HiddenInput, forms.HiddenInput)
+        super().__init__(widgets, *args, **kwargs)
+
+    def decompress(self, value):
+        # É obrigatório implementar este método para funcionar o multi campo.
+        return value
+
+
+class AnoMesField(forms.MultiValueField):
+    """Campo que recebe dois valores: Ano, mês e retorna uma lista com o range de data inicial e final do mês/ano"""
+    widget = AnoMesWidget
+
+    def __init__(self, *args, **kwargs):
+        fields = (forms.CharField(required=False), forms.CharField(required=False))
+        super().__init__(fields, *args, **kwargs)
+
+    def compress(self, data_list):
+        result = []
+
+        if data_list:
+            ano = data_list[0]
+            mes = data_list[1]
+
+            if ano not in EMPTY_VALUES and mes not in EMPTY_VALUES:
+                data_ini = datetime.strptime(f'01/{mes}/{ano}', '%d/%m/%Y')
+                data_fim = datetime(
+                    year=data_ini.year, month=data_ini.month, day=monthrange(data_ini.year, data_ini.month)[1]
+                )
+
+                result = [data_ini, data_fim]
+
+        return result
+
+
 class FormBuscaTimeLine(forms.Form):
     """Form utilizado para tratar as condições de filtro da query de notícias"""
     busca = forms.CharField(label='Busca', required=False)
@@ -109,5 +148,7 @@ class ContatoForm(forms.Form):
 
     def sendemail(self):
         recurso = Recurso.objects.get_or_create(recurso='EMAILADMIN')[0]
-        to = recurso.valor.split(',') if recurso.valor else []
+        to = recurso.valor.split(',') if recurso.valor else ['josircg@gmail.com']
+        Contato.objects.get_or_create(nome=self.cleaned_data.get('nome'),
+                                      email=self.cleaned_data.get('email'))
         sendmail('Formulário de Contato', to, params=self.cleaned_data, template='inclusao_email.html')

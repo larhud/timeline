@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load menu_tags cms_tags thumbnail static %}
+
+
+{% block title %}{% for section in article.get_sections %}{% if not section.slug == 'home' %}{{ section.title }} - {% endif %}{% endfor %}{{ article.title }} - {% endblock %}
+{% block ogtitle %}{% for section in article.get_sections %}{% if not section.slug == 'home' %}{{ section.title }} - {% endif %}{% endfor %}{{ article.title }} - {% endblock %}
+
+{% block description %}{{ article.content|striptags|truncatewords:20|safe }}{% endblock %}
+{% block ogdescription %}{{ article.content|striptags|truncatewords:20|safe }}{% endblock %}
+
+{% block keywords %}
+    {% for section in article.get_sections %}
+        {% if section.keywords %}
+            {{ section.keywords }},
+        {% endif %}
+    {% endfor %}
+    {% if article.keywords %}
+        {{ article.keywords }}
+    {% endif %}
+{% endblock %}
+
+
+{% block content %}
+    <div class="internas">
+            <div class="titulo">
+                <div class="container">
+                    <h1>{{article.title}}</h1>
+                </div>
+            </div>
+        </div>
+        <div class="conteudo">
+            <div class="container">
+                {{ article.content|safe }}
+            </div>
+        </div>
+
+{% endblock %}

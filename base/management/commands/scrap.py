@@ -1,6 +1,5 @@
 import os
 import time
-import requests
 
 from django.core.management.base import BaseCommand
 from base.models import Noticia
@@ -10,7 +9,8 @@ from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 # from selenium.webdriver.common.by import By
 
-from .get_text import extract_text, extract_scripts_and_styles, load_html, scrap_best_image, save_image, get_url_base
+from base import save_image, scrap_best_image, load_html, extract_scripts_and_styles
+from .get_text import extract_text, get_url_base
 
 
 def print_pdf(url, filename):

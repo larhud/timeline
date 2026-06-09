@@ -1,0 +1,82 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Nuvem Cronologica{% endblock %}
+
+{% block content %}
+<style>
+
+    table .datas{
+        vertical-align: middle;
+        font-size: 16px;
+    }
+
+    .termos ul{
+        padding-left: 0%;
+        margin: auto;
+    }
+
+    .termos ul li{
+        display: inline;
+        font-size: 16px;
+    }
+
+    li:nth-child(1){
+        color: #123856;
+    }
+    li:nth-child(2){
+        color: #1E6091;
+    }
+    li:nth-child(3){
+        color: #1A759F;
+    }
+    li:nth-child(4){
+        color: #168AAD;
+    }
+    li:nth-child(5){
+        color: #34A0A4;
+    }
+    li:nth-child(6){
+        color: #52B69A;
+    }
+    li:nth-child(7){
+        color: #76C893;
+    }
+    li:nth-child(8){
+        color: #99D98C;
+    }
+    li:nth-child(9){
+        color: #B5E48C;
+    }
+    li:nth-child(10){
+        color: #D9ED92;
+    }
+    
+</style>
+
+<table class="table">
+    <thead>
+        <tr>
+            {% for k in header %}
+            <th>{{k}}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in rows %}
+            <tr>
+                <td class="datas">{{r.dt_inicial}}</td>
+                <td class="datas">{{r.dt_final}}</td>
+                <td class="termos">
+                    <ul>
+                        {%for item in r.termos %}
+                        <li>
+                            {{item}}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% load mptt_tags menu_tags static admin_urls %}
+<nav class="navbar navbar-expand-md navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/"><img class="logo" src="{% static 'img/logo.png' %}" alt=""><h1>POWERCMS</h1></a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse"
+                aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <ul class="navbar-nav ml-auto">
+                    {% recursetree menu_itens %}
+                        {% if node.is_leaf_node %}
+                            <li class="nav-item {% if '#' in node.get_link|default:"#" %} page-scroll{% endif %}{% if node|is_active:request %} active{% endif %}">
+                                <a class="nav-link" href="{{ node.get_link|default:"#" }}">{{ node.name }}</a>
+                            </li>
+                        {% else %}
+                            {% if node.get_level == 0 %}
+                                <li class="dropdown nav-item{% if node|is_active:request %} active{% endif %}">
+                                    <a href="{{ node.get_link|default:"#" }}" class="nav-link {% if '#' in node.get_link|default:"#" %} page-scroll{% endif %}dropdown-toggle js-activated" data-toggle="dropdown">{{ node.name }} <b class="caret"></b></a>
+                                    <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu">
+                                        {{ children }}
+                                    </ul>
+                                </li>
+                            {% elif node.get_level > 0 %}
+                                <li class=" nav-item {% if '#' in node.get_link|default:"#" %} page-scroll{% endif %}dropdown-submenu{% if node|is_active:request %} active{% endif %}">
+                                    <a href="{{ node.get_link|default:"#" }}" class="dropdown-toggle nav-link">{{ node.name }}</a>
+                                    <ul class="dropdown-menu">
+                                        {{ children }}
+                                    </ul>
+                                </li>
+                            {% endif %}
+                        {% endif %}
+                    {% endrecursetree %}
+                    {% if request.user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin:index' %}">Área Administrativa</a>
+                    </li>
+                   {% else %}
+                     <li class="nav-item">
+                         <a class="nav-link" href="/login">Área Administrativa</a>
+                     </li>
+                   {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+

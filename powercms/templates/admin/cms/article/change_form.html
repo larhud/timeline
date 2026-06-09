@@ -1,0 +1,34 @@
+﻿{% extends "admin/change_form.html" %}
+
+{% block extrahead %}{{ block.super }}
+    <style type="text/css">
+        #id_title, #id_slug {
+            width: 20em;
+        }
+
+        #id_sections {
+            height: 150px;
+            min-width: 20em;
+        }
+
+        #id_content {
+            width: 50em;
+        }
+    </style>
+
+    <script type="text/javascript">
+        (function ($) {
+            $(document).ready(function ($) {
+                if ($('.field-header').contents().find('#id_header').val().length>0) {
+                    $('.field-header').show();
+                } else {
+                    $('.field-header').hide();
+                }
+                $('.button-chamada').click(function (event) {
+                    $('.field-header').show();
+                });
+            });
+        })(django.jQuery);
+    </script>
+
+{% endblock %}

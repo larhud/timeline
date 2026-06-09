@@ -1,0 +1,53 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block extrahead %}{{ block.super }}
+<style type="text/css">
+    #id_content {
+        width: 500px;
+        height: 100px;
+    }
+</style>
+<script type="text/javascript">
+    (function($) {
+        $(document).ready(function($) {
+            $('.field-title, .field-header, .field-content, .field-is_active, .field-upload, #sectionitem_set-group').hide();
+
+            if($('.field-link input:checked').val() == 'True'){
+                $('.field-content, #sectionitem_set-group').show();
+                CKEDITOR.instances.id_content.destroy();
+            }else if($('.field-link input:checked').val() == 'False'){
+                $('.field-title, .field-header, .field-content, .field-is_active, .field-upload, #sectionitem_set-group').show();
+
+            }
+            $('#id_link').click(function(event) {
+                $('.field-title, .field-header, .field-content, .field-is_active, .field-upload, #sectionitem_set-group').hide();
+                if($('.field-link input:checked').val() == 'True'){
+                    $('.field-content, #sectionitem_set-group').show();
+                    CKEDITOR.instances.id_content.destroy();
+                }else if($('.field-link input:checked').val() == 'False'){
+                    $('.field-title, .field-header, .field-content, .field-is_active, .field-upload, #sectionitem_set-group').show();
+                    CKEDITOR.replace("id_content", {"filebrowserWindowWidth": 940, "toolbar_Basic": [["Source", "-", "Bold", "Italic"]], "contentsCss": ["/static/ckeditor_config/content.css"], "toolbar_Full": [["Styles", "Format", "Bold", "Italic", "Underline", "Strike", "SpellChecker", "Undo", "Redo"], ["Image", "Flash", "Table", "HorizontalRule"], ["TextColor", "BGColor"], ["Smiley", "SpecialChar"], ["Source"]], "filebrowserUploadUrl": "/ckeditor/upload/", "height": 291, "width": 835, "filebrowserBrowseUrl": "/ckeditor/browse/", "skin": "moono", "filebrowserWindowHeight": 725, "stylesSet": "my_styles:/static/ckeditor_config/styles.js", "toolbar": [{"items": ["Source", "-", "Preview"], "name": "document"}, {"items": ["Bold", "Italic", "Underline", "Strike", "Subscript", "Superscript", "-", "RemoveFormat"], "name": "basicstyles", "groups": ["basicstyles", "cleanup"]}, {"items": ["NumberedList", "BulletedList", "-", "Outdent", "Indent", "-", "Blockquote", "CreateDiv", "-", "JustifyLeft", "JustifyCenter", "JustifyRight", "JustifyBlock"], "name": "paragraph", "groups": ["list", "indent", "blocks", "align"]}, "/", {"items": ["Styles", "Format"], "name": "styles"}, {"items": ["TextColor", "BGColor"], "name": "colors"}, {"items": ["Maximize", "ShowBlocks"], "name": "tools"}, {"items": ["Link", "Unlink", "Anchor"], "name": "links"}, {"items": ["Image", "Table", "HorizontalRule"], "name": "insert"}]});
+
+                }
+            });
+        });
+    })(django.jQuery);
+</script>
+{% endblock %}
+
+
+{% block object-tools-items %}
+
+    {% if change %}
+        <li><a href="history/" class="historylink">{% trans "History" %}</a></li>
+        {% if has_absolute_url %}
+            <li><a href="../../../../r/{{ content_type_id }}/{{ object_id }}/" class="viewsitelink">{% trans "View on site" %}</a></li>
+        {% endif%}
+    {% endif %}
+
+    {% for button in buttons %}
+        <li><a href="{{ button.get_url }}" {% for key,val in button.attrs.items %}{{ key }}="{{ val }}"{% endfor %}>{{ button.label }}</a></li>
+    {% endfor %}
+
+{% endblock %}

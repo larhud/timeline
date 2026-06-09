@@ -1,0 +1,8 @@
+<script src="https:{{ api_server }}.js{% if api_params %}?{{ api_params }}{% endif %}"></script>
+<div class="g-recaptcha" data-sitekey="{{ public_key }}"></div>
+<script type="text/javascript">
+    // Submit function to be called, after reCAPTCHA was successful.
+    var onSubmit_{{ widget.attrs.id }} = function(token) {
+        console.log("reCAPTCHA validated for 'data-widget-uuid=\"{{ widget.attrs.id }}\"'")
+    };
+</script>
