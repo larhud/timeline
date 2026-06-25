@@ -38,6 +38,12 @@ class TimeLinePorTermo(DetailView):
     model = Termo
     slug_field = 'slug'
 
+    def get_template_names(self):
+        slug = self.kwargs.get(self.slug_url_kwarg)
+        if slug:
+            return [f'timeline-por-termo-{slug}.html', self.template_name]
+        return super().get_template_names()
+
 
 # noticia_termo: Dataset com as notícias que farão parte da nuvem
 def build_crono_cloud(noticias_termo, n_slot=15):
